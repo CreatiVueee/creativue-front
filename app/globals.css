@@ -156,6 +156,14 @@
   --sidebar-ring: oklch(0.439 0 0);
 }
 
+/* ─────────────────────────────────────────────
+   Swiper — 슬라이드 오버플로 보정
+   (overflow:hidden이 없으면 루프 클론 슬라이드가 노출됨)
+   ───────────────────────────────────────────── */
+.swiper {
+  overflow: hidden;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
