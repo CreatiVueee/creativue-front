@@ -1,10 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-// import { useQuery } from "@tanstack/react-query";
-// import { fetchProjects } from "@/shared/lib/supabase/queries";
-import { adaptProjectToContest } from "@/shared/lib/supabase/queries";
-import { projectsDB } from "@/data/contestsDB";
+import { useQuery } from "@tanstack/react-query";
+import { fetchProjects, adaptProjectToContest } from "@/shared/lib/supabase/queries";
 import { calcDday } from "@/shared/lib/utils/date";
 import type { Contest } from "@/shared/types";
 
@@ -66,16 +64,13 @@ const INITIAL_FILTERS: FilterState = {
 export function useContestFilters() {
   const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS);
 
-  // ⏳ DB 연동 시 아래 주석 해제 후 더미 데이터 제거
-  // const { data: allContests = [], isLoading } = useQuery<Contest[]>({
-  //   queryKey: ["contests"],
-  //   queryFn: async () => {
-  //     const projects = await fetchProjects();
-  //     return projects.map(adaptProjectToContest);
-  //   },
-  // });
-  const allContests: Contest[] = projectsDB.map(adaptProjectToContest);
-  const isLoading = false;
+  const { data: allContests = [], isLoading } = useQuery<Contest[]>({
+    queryKey: ["contests"],
+    queryFn: async () => {
+      const projects = await fetchProjects();
+      return projects.map(adaptProjectToContest);
+    },
+  });
 
   const update = (patch: Partial<FilterState>) =>
     setFilters((prev) => ({ ...prev, ...patch }));

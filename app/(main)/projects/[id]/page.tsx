@@ -9,11 +9,10 @@ import {
   Target, ShoppingBag, MessageSquare, Sparkles,
 } from "lucide-react";
 import {
-  // fetchProjectById,
+  fetchProjectById,
   adaptProjectToContest,
   insertProjectApplicant,
 } from "@/shared/lib/supabase/queries";
-import { projectsDB } from "@/data/contestsDB";
 import { calcDday, formatDday, getDdayColorClass } from "@/shared/lib/utils/date";
 import { useAuthStore } from "@/features/auth/store/authStore";
 import { useLoginModalStore } from "@/features/auth/store/loginModalStore";
@@ -64,14 +63,9 @@ export default function ContestDetailPage({
   const { isLoggedIn } = useAuthStore();
   const openLoginModal = useLoginModalStore((s) => s.open);
 
-  // ⏳ DB 연동 시 아래 주석 해제 후 더미 데이터 제거
-  // const { data: projectRaw, isLoading } = useQuery({
-  //   queryKey: ["contest", id],
-  //   queryFn: () => fetchProjectById(Number(id)),
-  // });
   const { data: projectRaw, isLoading } = useQuery({
     queryKey: ["contest", id],
-    queryFn: () => projectsDB.find((p) => p.id === Number(id)) ?? null,
+    queryFn: () => fetchProjectById(Number(id)),
   });
 
   const contest = projectRaw ? adaptProjectToContest(projectRaw) : null;
