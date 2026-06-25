@@ -70,8 +70,25 @@ function MobileFilterDrawer({
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+function ContestGridSkeleton() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="bg-white rounded-[18px] border border-gray-100 overflow-hidden animate-pulse">
+          <div className="h-40 bg-gray-100" />
+          <div className="p-4 space-y-2">
+            <div className="h-4 bg-gray-100 rounded w-3/4" />
+            <div className="h-3 bg-gray-100 rounded w-1/2" />
+            <div className="h-10 bg-gray-100 rounded mt-3" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function ProjectsPage() {
-  const { filters, filtered, hotContests, totalActive, update, toggle, reset } =
+  const { filters, filtered, hotContests, totalActive, update, toggle, reset, isLoading } =
     useContestFilters();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -180,22 +197,26 @@ export default function ProjectsPage() {
             />
 
             {/* Contest Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-              {filtered.length === 0 ? (
-                <EmptyState onReset={reset} />
-              ) : (
-                filtered.map((contest, i) => (
-                  <motion.div
-                    key={contest.id}
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: i * 0.05 }}
-                  >
-                    <ContestCard contest={contest} />
-                  </motion.div>
-                ))
-              )}
-            </div>
+            {isLoading ? (
+              <ContestGridSkeleton />
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+                {filtered.length === 0 ? (
+                  <EmptyState onReset={reset} />
+                ) : (
+                  filtered.map((contest, i) => (
+                    <motion.div
+                      key={contest.id}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: i * 0.05 }}
+                    >
+                      <ContestCard contest={contest} />
+                    </motion.div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

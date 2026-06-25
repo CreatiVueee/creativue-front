@@ -16,6 +16,10 @@ export interface ContestFormState {
   prize: string;
   deadline: string;
   aiAllowed: "가능" | "불가능" | "";
+  purposes: string[];
+  purposeOther: string;
+  priceRange: string;
+  differentiation: string;
   images: File[];
   additionalNotes: string;
 }
@@ -32,6 +36,10 @@ interface ContestFormPanelProps {
 const CONTENT_TYPE_OPTIONS = [
   "로고", "상세페이지", "DA", "해외 광고",
   "포스터 템플릿", "디지털 광고 템플릿", "제품 디자인", "리플렛", "기타",
+] as const;
+
+const PURPOSE_OPTIONS = [
+  "전환 유도", "제품 상세 설명", "브랜드 인지도 향상", "제품 디자인", "기타",
 ] as const;
 
 const AI_OPTIONS = [
@@ -179,6 +187,13 @@ export function ContestFormPanel({ form, isSubmitting, onUpdate, onSubmit }: Con
         : [...form.contentTypes, ct],
     });
 
+  const togglePurpose = (p: string) =>
+    onUpdate({
+      purposes: form.purposes.includes(p)
+        ? form.purposes.filter((x) => x !== p)
+        : [...form.purposes, p],
+    });
+
   const addImages = (files: FileList) => {
     const remaining = MAX_IMAGES - form.images.length;
     const newFiles = Array.from(files).slice(0, remaining);
@@ -193,7 +208,10 @@ export function ContestFormPanel({ form, isSubmitting, onUpdate, onSubmit }: Con
     form.contentTypes.length > 0 &&
     form.prize.length > 0 &&
     form.deadline.length > 0 &&
-    form.aiAllowed !== "";
+    form.aiAllowed !== "" &&
+    form.purposes.length > 0 &&
+    form.priceRange.length > 0 &&
+    form.differentiation.length > 0;
 
   return (
     <div className="space-y-5">
@@ -337,17 +355,81 @@ export function ContestFormPanel({ form, isSubmitting, onUpdate, onSubmit }: Con
         </AnimatePresence>
       </FieldGroup>
 
-      {/* 5. 이미지 업로드 */}
+      {/* 5. 콘텐츠 제작 목적 */}
+      <FieldGroup num="5" label="콘텐츠 제작 목적" sub="복수 선택 가능 · '기타' 선택 시 직접 입력" required>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {PURPOSE_OPTIONS.map((p) => (
+            <ChipButton
+              key={p}
+              active={form.purposes.includes(p)}
+              onClick={() => togglePurpose(p)}
+              variant="light"
+              showCheckIcon
+              className="px-4 py-2.5 text-sm"
+            >
+              {p}
+            </ChipButton>
+          ))}
+        </div>
+        <AnimatePresence>
+          {form.purposes.includes("기타") && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <input
+                value={form.purposeOther}
+                onChange={(e) => onUpdate({ purposeOther: e.target.value })}
+                placeholder="기타 목적을 직접 입력해주세요"
+                className="w-full rounded-xl border-2 px-4 py-2.5 text-sm text-gray-700 focus:outline-none transition-colors placeholder-gray-300"
+                style={{ borderColor: form.purposeOther ? "#b26efd" : "#e5e7eb" }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+        {form.purposes.length > 0 && (
+          <p className="text-[11px] mt-2 font-semibold" style={{ color: "#b26efd" }}>
+            {form.purposes.length}개 선택됨 ✓
+          </p>
+        )}
+      </FieldGroup>
+
+      {/* 6. 제품 가격대 */}
+      <FieldGroup num="6" label="제품 가격대" sub="제품의 판매 가격 범위를 입력해주세요 (예: 10,000원 ~ 50,000원)" required>
+        <input
+          value={form.priceRange}
+          onChange={(e) => onUpdate({ priceRange: e.target.value })}
+          placeholder="예: 30,000원 ~ 100,000원"
+          className="w-full rounded-xl border-2 px-4 py-2.5 text-sm text-gray-700 focus:outline-none transition-colors placeholder-gray-300"
+          style={{ borderColor: form.priceRange ? "#b26efd" : "#e5e7eb" }}
+        />
+      </FieldGroup>
+
+      {/* 7. 차별화 포인트 */}
+      <FieldGroup num="7" label="차별화 포인트" sub="경쟁 제품 대비 우리 브랜드/제품의 강점을 입력해주세요" required>
+        <textarea
+          value={form.differentiation}
+          onChange={(e) => onUpdate({ differentiation: e.target.value })}
+          rows={3}
+          placeholder="예: 국내 유기농 원료 100% 사용, 제로 웨이스트 포장"
+          className="w-full rounded-xl border-2 px-4 py-3 text-sm text-gray-700 resize-none focus:outline-none transition-colors placeholder-gray-300 leading-relaxed"
+          style={{ borderColor: form.differentiation ? "#b26efd" : "#e5e7eb" }}
+        />
+      </FieldGroup>
+
+      {/* 8. 이미지 업로드 */}
       <FieldGroup
-        num="5"
+        num="8"
         label="관련 이미지 업로드"
         sub={`최대 ${MAX_IMAGES}장 · PNG, JPG, GIF 지원 · 브랜드 레퍼런스, 무드보드 등`}
       >
         <ImageUploader images={form.images} onAdd={addImages} onRemove={removeImage} />
       </FieldGroup>
 
-      {/* 6. 추가 사항 */}
-      <FieldGroup num="6" label="추가 사항" sub="프리랜서에게 전달할 안내 사항을 자유롭게 작성해 주세요">
+      {/* 9. 추가 사항 */}
+      <FieldGroup num="9" label="추가 사항" sub="프리랜서에게 전달할 안내 사항을 자유롭게 작성해 주세요">
         <textarea
           value={form.additionalNotes}
           onChange={(e) => onUpdate({ additionalNotes: e.target.value })}

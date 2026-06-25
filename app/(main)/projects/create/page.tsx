@@ -3,7 +3,9 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
 import { useBrandReviewStore } from "@/features/auth/store/brandReviewStore";
+import { insertBrand, insertProject } from "@/shared/lib/supabase/queries";
 import { BrandReviewPanel } from "./_components/BrandReviewPanel";
 import { ContestFormPanel, type ContestFormState } from "./_components/ContestFormPanel";
 import { ContestSuccessView } from "./_components/ContestSuccessView";
@@ -14,6 +16,10 @@ const INITIAL_FORM: ContestFormState = {
   prize: "",
   deadline: "",
   aiAllowed: "",
+  purposes: [],
+  purposeOther: "",
+  priceRange: "",
+  differentiation: "",
   images: [],
   additionalNotes: "",
 };
@@ -29,13 +35,62 @@ export default function ContestCreatePage() {
   const update = (patch: Partial<ContestFormState>) =>
     setForm((prev) => ({ ...prev, ...patch }));
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsSubmitting(true);
-    // ⏳ 나중에: Supabase contests 테이블 insert
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      // 1. brands INSERT
+      // ⏳ 나중에: client_id → 실제 로그인 유저 ID, brand_image → Storage 업로드 URL
+      const brandId = await insertBrand({
+        brand_name: brandData.brandName,
+        brand_identity: brandData.brandIdentity,
+        brand_story: brandData.brandStory,
+        brand_core_keywords: brandData.keywords,
+        brand_image: "",
+        industries: brandData.industries,
+        input_type: "form",
+        client_id: 1,
+        target_market: brandData.market || null,
+        target_gender: brandData.gender || null,
+        target_ages: brandData.ageGroups.length > 0 ? brandData.ageGroups : null,
+        target_interests: brandData.interests.length > 0 ? brandData.interests : null,
+        target_jobs: brandData.occupation || null,
+        extra_notes: brandData.additionalNotes || null,
+        extra_notes_etc: brandData.desiredPerception || null,
+      });
+
+      // 2. projects INSERT
+      // ⏳ 나중에: reference_image_url → Supabase Storage 업로드 후 URL 배열
+      const contentTypes = form.contentTypes.includes("기타") && form.contentTypeOther
+        ? [...form.contentTypes.filter((t) => t !== "기타"), form.contentTypeOther]
+        : form.contentTypes;
+
+      const purposes = form.purposes.includes("기타") && form.purposeOther
+        ? [...form.purposes.filter((p) => p !== "기타"), form.purposeOther]
+        : form.purposes;
+
+      await insertProject({
+        brand_id: brandId,
+        title: brandData.brandName,
+        content_categories: contentTypes,
+        content_purpose: purposes,
+        deadline_date: form.deadline,
+        reward_amount: Number(form.prize.replace(/,/g, "")),
+        paid_amount: 0,
+        price_range: form.priceRange,
+        differentiation_point: form.differentiation,
+        required_content: contentTypes,
+        is_ai_allowed: form.aiAllowed === "가능",
+        reference_image_url: [],
+        additional_info: form.additionalNotes || null,
+      });
+
       setIsSuccess(true);
-    }, 1000);
+    } catch (err) {
+      console.error("공모전 등록 실패:", err);
+      toast.error("공모전 등록에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isSuccess) {

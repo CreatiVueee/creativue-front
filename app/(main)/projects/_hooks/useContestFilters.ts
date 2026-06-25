@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { contests } from "@/data/contests";
+// import { useQuery } from "@tanstack/react-query";
+// import { fetchProjects } from "@/shared/lib/supabase/queries";
+import { adaptProjectToContest } from "@/shared/lib/supabase/queries";
+import { projectsDB } from "@/data/contestsDB";
 import { calcDday } from "@/shared/lib/utils/date";
 import type { Contest } from "@/shared/types";
 
@@ -39,7 +42,6 @@ export const PRIZE_OPTIONS = [
 
 export const SORT_OPTIONS: SortOption[] = ["최신순", "상금 높은순", "마감 임박순", "지원자 많은순"];
 
-// 필터 레이블 → 실제 contentTypes 값 매핑
 const CONTENT_TYPE_MAP: Record<string, string[]> = {
   "로고":              ["로고"],
   "포스터 템플릿":      ["포스터 템플릿"],
@@ -64,6 +66,17 @@ const INITIAL_FILTERS: FilterState = {
 export function useContestFilters() {
   const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS);
 
+  // ⏳ DB 연동 시 아래 주석 해제 후 더미 데이터 제거
+  // const { data: allContests = [], isLoading } = useQuery<Contest[]>({
+  //   queryKey: ["contests"],
+  //   queryFn: async () => {
+  //     const projects = await fetchProjects();
+  //     return projects.map(adaptProjectToContest);
+  //   },
+  // });
+  const allContests: Contest[] = projectsDB.map(adaptProjectToContest);
+  const isLoading = false;
+
   const update = (patch: Partial<FilterState>) =>
     setFilters((prev) => ({ ...prev, ...patch }));
 
@@ -84,12 +97,15 @@ export function useContestFilters() {
   const totalActive =
     filters.aiFilter.length + filters.contentFilter.length + filters.prizeFilter.length;
 
-  const hotContests = useMemo(() => contests.filter((c) => c.hot), []);
+  const hotContests = useMemo(
+    () => allContests.filter((c) => c.hot),
+    [allContests]
+  );
 
   const filtered = useMemo((): Contest[] => {
     const q = filters.search.toLowerCase().trim();
 
-    return contests
+    return allContests
       .filter((c) => {
         if (q &&
           !c.brand.toLowerCase().includes(q) &&
@@ -131,7 +147,7 @@ export function useContestFilters() {
           default:             return b.id - a.id;
         }
       });
-  }, [filters]);
+  }, [filters, allContests]);
 
-  return { filters, filtered, hotContests, totalActive, update, toggle, reset };
+  return { filters, filtered, hotContests, totalActive, update, toggle, reset, isLoading };
 }

@@ -3,17 +3,23 @@
 import { use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft, Trophy, Calendar, Users, Bot, BotOff,
   Target, ShoppingBag, MessageSquare, Sparkles,
 } from "lucide-react";
-import { contests } from "@/data/contests";
+import {
+  // fetchProjectById,
+  adaptProjectToContest,
+  insertProjectApplicant,
+} from "@/shared/lib/supabase/queries";
+import { projectsDB } from "@/data/contestsDB";
 import { calcDday, formatDday, getDdayColorClass } from "@/shared/lib/utils/date";
 import { useAuthStore } from "@/features/auth/store/authStore";
 import { useLoginModalStore } from "@/features/auth/store/loginModalStore";
 import { ImageGallery } from "./_components/ImageGallery";
 
-// ─── Helper ───────────────────────────────────────────────────────────────────
+// ─── Helper ──────────────────────────────────────────────────────────────────
 
 function formatPrize(prize: number) {
   if (prize >= 10_000_000) return `${prize / 10_000_000}천만원`;
@@ -46,7 +52,7 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function ContestDetailPage({
   params,
@@ -58,7 +64,44 @@ export default function ContestDetailPage({
   const { isLoggedIn } = useAuthStore();
   const openLoginModal = useLoginModalStore((s) => s.open);
 
-  const contest = contests.find((c) => c.id === Number(id));
+  // ⏳ DB 연동 시 아래 주석 해제 후 더미 데이터 제거
+  // const { data: projectRaw, isLoading } = useQuery({
+  //   queryKey: ["contest", id],
+  //   queryFn: () => fetchProjectById(Number(id)),
+  // });
+  const { data: projectRaw, isLoading } = useQuery({
+    queryKey: ["contest", id],
+    queryFn: () => projectsDB.find((p) => p.id === Number(id)) ?? null,
+  });
+
+  const contest = projectRaw ? adaptProjectToContest(projectRaw) : null;
+  const dday = contest ? calcDday(contest.deadline) : 0;
+  const ddayLabel = formatDday(dday);
+
+  const handleApply = async () => {
+    if (!isLoggedIn) {
+      openLoginModal(`/projects/${id}`);
+      return;
+    }
+    try {
+      // ⏳ 나중에: 실제 로그인 프리랜서 ID로 교체
+      await insertProjectApplicant(Number(id), 1);
+      alert("지원이 완료되었습니다!");
+    } catch {
+      alert("이미 지원하셨거나 오류가 발생했습니다.");
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[calc(100vh-68px)] flex items-center justify-center">
+        <div
+          className="w-8 h-8 rounded-full border-[3px] border-t-transparent animate-spin"
+          style={{ borderColor: "#b26efd", borderTopColor: "transparent" }}
+        />
+      </div>
+    );
+  }
 
   if (!contest) {
     return (
@@ -70,18 +113,6 @@ export default function ContestDetailPage({
       </div>
     );
   }
-
-  const dday = calcDday(contest.deadline);
-  const ddayLabel = formatDday(dday);
-
-  const handleApply = () => {
-    if (!isLoggedIn) {
-      openLoginModal(`/projects/${id}`);
-      return;
-    }
-    // ⏳ 나중에: Supabase 지원 신청 처리
-    alert("지원이 완료되었습니다!");
-  };
 
   return (
     <div className="min-h-[calc(100vh-68px)] bg-gray-50 pb-16">
@@ -201,9 +232,9 @@ export default function ContestDetailPage({
               )}
             </SectionCard>
 
-            {/* Keywords & Colors */}
-            <SectionCard title="브랜드 키워드 · 색상" icon={<Sparkles size={18} />}>
-              <div className="flex flex-wrap gap-2 mb-5">
+            {/* Keywords */}
+            <SectionCard title="브랜드 키워드" icon={<Sparkles size={18} />}>
+              <div className="flex flex-wrap gap-2">
                 {contest.brandKeywords.map((kw) => (
                   <span
                     key={kw}
@@ -214,22 +245,6 @@ export default function ContestDetailPage({
                   </span>
                 ))}
               </div>
-              {contest.brandColors.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase mb-2.5">브랜드 색상</p>
-                  <div className="flex gap-3">
-                    {contest.brandColors.map((hex) => (
-                      <div key={hex} className="flex flex-col items-center gap-1">
-                        <div
-                          className="w-10 h-10 rounded-xl border border-gray-200 shadow-sm"
-                          style={{ background: hex }}
-                        />
-                        <span className="text-[10px] text-gray-500 font-mono">{hex}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </SectionCard>
           </div>
 

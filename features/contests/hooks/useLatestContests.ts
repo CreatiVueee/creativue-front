@@ -1,15 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
-import { contests } from "@/data/contests";
+// import { fetchProjects } from "@/shared/lib/supabase/queries";
+import { adaptProjectToContest } from "@/shared/lib/supabase/queries";
+import { projectsDB } from "@/data/contestsDB";
 import type { Contest } from "@/shared/types";
 
-// ⏳ 나중에: Supabase `contests` 테이블 쿼리로 교체
-async function fetchLatestContests(): Promise<Contest[]> {
-  return contests.slice(0, 6);
-}
-
 export function useLatestContests() {
-  return useQuery({
+  return useQuery<Contest[]>({
     queryKey: ["contests", "latest"],
-    queryFn: fetchLatestContests,
+    queryFn: async () => {
+      // ⏳ DB 연동 시 아래 주석 해제 후 더미 데이터 제거
+      // const projects = await fetchProjects();
+      // return projects.slice(0, 6).map(adaptProjectToContest);
+      return projectsDB.slice(0, 6).map(adaptProjectToContest);
+    },
   });
 }
