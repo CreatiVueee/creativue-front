@@ -54,7 +54,7 @@ export type Database = {
           brand_image: string;
           brand_name: string;
           brand_story: string;
-          client_id: number;
+          client_id: string;
           created_at: string;
           extra_notes: string | null;
           extra_notes_etc: string | null;
@@ -77,7 +77,7 @@ export type Database = {
           brand_image: string;
           brand_name: string;
           brand_story: string;
-          client_id: number;
+          client_id: string;
           created_at?: string;
           extra_notes?: string | null;
           extra_notes_etc?: string | null;
@@ -100,7 +100,7 @@ export type Database = {
           brand_image?: string;
           brand_name?: string;
           brand_story?: string;
-          client_id?: number;
+          client_id?: string;
           created_at?: string;
           extra_notes?: string | null;
           extra_notes_etc?: string | null;
@@ -131,7 +131,7 @@ export type Database = {
         Row: {
           created_at: string;
           email: string;
-          id: number;
+          id: string;
           interested_fields: string[];
           login_id: string;
           password_hash: string;
@@ -140,7 +140,7 @@ export type Database = {
         Insert: {
           created_at?: string;
           email: string;
-          id?: number;
+          id: string;
           interested_fields: string[];
           login_id: string;
           password_hash: string;
@@ -149,7 +149,7 @@ export type Database = {
         Update: {
           created_at?: string;
           email?: string;
-          id?: number;
+          id?: string;
           interested_fields?: string[];
           login_id?: string;
           password_hash?: string;
@@ -163,7 +163,7 @@ export type Database = {
           created_at: string;
           email: string;
           experience_years: string | null;
-          id: number;
+          id: string;
           main_expertise: string[] | null;
           nickname: string;
           phone_number: string;
@@ -176,7 +176,7 @@ export type Database = {
           created_at?: string;
           email: string;
           experience_years?: string | null;
-          id?: number;
+          id: string;
           main_expertise?: string[] | null;
           nickname: string;
           phone_number: string;
@@ -189,7 +189,7 @@ export type Database = {
           created_at?: string;
           email?: string;
           experience_years?: string | null;
-          id?: number;
+          id?: string;
           main_expertise?: string[] | null;
           nickname?: string;
           phone_number?: string;
@@ -230,19 +230,19 @@ export type Database = {
         Row: {
           applied_at: string;
           created_at: string;
-          freelancer_id: number;
+          freelancer_id: string;
           project_id: number;
         };
         Insert: {
           applied_at: string;
           created_at?: string;
-          freelancer_id: number;
+          freelancer_id: string;
           project_id: number;
         };
         Update: {
           applied_at?: string;
           created_at?: string;
-          freelancer_id?: number;
+          freelancer_id?: string;
           project_id?: number;
         };
         Relationships: [
@@ -267,11 +267,11 @@ export type Database = {
           additional_description: string | null;
           color_system_rationale: string | null;
           created_at: string;
-          freelancer_id: number;
+          freelancer_id: string;
           id: number;
           is_selected: boolean;
           layout_rationale: string | null;
-          portfolio_file_url: string;
+          portfolio_file_urls: string[];
           project_id: number;
           tone_and_manner: string | null;
         };
@@ -279,11 +279,11 @@ export type Database = {
           additional_description?: string | null;
           color_system_rationale?: string | null;
           created_at?: string;
-          freelancer_id: number;
+          freelancer_id: string;
           id?: number;
           is_selected?: boolean;
           layout_rationale?: string | null;
-          portfolio_file_url: string;
+          portfolio_file_urls?: string[];
           project_id: number;
           tone_and_manner?: string | null;
         };
@@ -291,11 +291,11 @@ export type Database = {
           additional_description?: string | null;
           color_system_rationale?: string | null;
           created_at?: string;
-          freelancer_id?: number;
+          freelancer_id?: string;
           id?: number;
           is_selected?: boolean;
           layout_rationale?: string | null;
-          portfolio_file_url?: string;
+          portfolio_file_urls?: string[];
           project_id?: number;
           tone_and_manner?: string | null;
         };
@@ -333,6 +333,7 @@ export type Database = {
           reference_image_url: string[];
           required_content: string[];
           reward_amount: number;
+          status: string;
           title: string;
         };
         Insert: {
@@ -351,6 +352,7 @@ export type Database = {
           reference_image_url: string[];
           required_content: string[];
           reward_amount: number;
+          status?: string;
           title: string;
         };
         Update: {
@@ -369,6 +371,7 @@ export type Database = {
           reference_image_url?: string[];
           required_content?: string[];
           reward_amount?: number;
+          status?: string;
           title?: string;
         };
         Relationships: [

@@ -48,7 +48,7 @@ export default function ContestCreatePage() {
         brand_image: "",
         industries: brandData.industries,
         input_type: "form",
-        client_id: 1,
+        client_id: "00000000-0000-0000-0000-000000000001",
         target_market: brandData.market || null,
         target_gender: brandData.gender || null,
         target_ages: brandData.ageGroups.length > 0 ? brandData.ageGroups : null,

@@ -24,6 +24,7 @@ export const projectsDB: ProjectWithBrand[] = [
     ],
     required_content: ["로고", "디지털 광고 템플릿"],
     reward_amount: 3000000,
+    status: "recruiting",
     additional_info:
       "현재 무료 체험 30일 제공 중이며, 연간 결제 시 20% 할인 혜택이 있습니다.",
     brands: {
@@ -39,7 +40,7 @@ export const projectsDB: ProjectWithBrand[] = [
         "https://images.unsplash.com/photo-1622465911894-1e73cbdc293a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
         "https://images.unsplash.com/photo-1642132652866-6fa262d3161f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
       ],
-      client_id: 1,
+      client_id: "00000000-0000-0000-0000-000000000001",
       created_at: "2026-06-15T10:00:00Z",
       updated_at: "2026-06-15T10:00:00Z",
       extra_notes: "브랜드 컬러인 네이비와 블루 계열을 유지해 주세요. 신뢰감과 전문성이 느껴지는 방향으로 제작 부탁드립니다.",
@@ -74,6 +75,7 @@ export const projectsDB: ProjectWithBrand[] = [
     ],
     required_content: ["제품 디자인", "상세페이지"],
     reward_amount: 2000000,
+    status: "judging",
     additional_info:
       "B2B 기업 고객에게는 전용 패키징 디자인 커스터마이징 서비스도 제공하며, MOQ는 500개입니다.",
     brands: {
@@ -89,7 +91,7 @@ export const projectsDB: ProjectWithBrand[] = [
         "https://images.unsplash.com/photo-1739949381110-81f449e5a494?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
         "https://images.unsplash.com/photo-1760368104753-fe0994f94ff3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
       ],
-      client_id: 2,
+      client_id: "00000000-0000-0000-0000-000000000002",
       created_at: "2026-06-12T09:00:00Z",
       updated_at: "2026-06-12T09:00:00Z",
       extra_notes: "그린 계열 색상 중심으로, 따뜻하고 유기적인 느낌으로 표현해 주세요.",
@@ -124,6 +126,7 @@ export const projectsDB: ProjectWithBrand[] = [
     ],
     required_content: ["DA", "배너 광고", "해외 광고"],
     reward_amount: 5000000,
+    status: "recruiting",
     additional_info:
       "일본 라쿠텐·라자다 동남아 입점 완료. 면세점 전용 한정 패키지 라인업도 운영 중입니다.",
     brands: {
@@ -131,7 +134,7 @@ export const projectsDB: ProjectWithBrand[] = [
       brand_name: "Glow Beauty",
       brand_identity: "감각적이고 자신감 넘치는 K-뷰티 럭셔리 브랜드",
       brand_story:
-        "Glow Beauty는 2019년 론칭한 프리미엄 K-뷰티 브랜드입니다. '당신의 빛을 발견하라'는 메시지를 중심으로, 피부 본연의 아름다움을 극대화하는 스킨케어 라인을 선보이고 있습니다.",
+        "Glow Beauty는 2019년 론칭한 프리미엄 K-뷰티 브랜드입니다. '당신의 빛을 발견하라'는 메시지를 중심으로, 피부 본연의 아름다움을 극대화하는 스킨케어 라 선보이고 있습니다.",
       brand_core_keywords: ["글로우", "럭셔리", "자신감", "감각적", "K-뷰티"],
       brand_image:
         "https://images.unsplash.com/photo-1776015036380-4022fe844ed8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
@@ -139,7 +142,7 @@ export const projectsDB: ProjectWithBrand[] = [
         "https://images.unsplash.com/photo-1765887986673-953fccf56464?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
         "https://images.unsplash.com/photo-1764698192249-641a17d7a4fe?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
       ],
-      client_id: 3,
+      client_id: "00000000-0000-0000-0000-000000000003",
       created_at: "2026-06-10T08:00:00Z",
       updated_at: "2026-06-10T08:00:00Z",
       extra_notes: "로즈 핑크와 골드 컬러 조합을 선호합니다. 해외 광고는 영문 카피도 함께 제안해 주세요.",
@@ -174,6 +177,7 @@ export const projectsDB: ProjectWithBrand[] = [
     ],
     required_content: ["로고", "포스터 템플릿"],
     reward_amount: 1500000,
+    status: "recruiting",
     additional_info: "멤버십 가입 시 음료 10% 상시 할인 적용. 매월 한정판 시즌 메뉴 운영 중.",
     brands: {
       id: 4,
@@ -188,7 +192,7 @@ export const projectsDB: ProjectWithBrand[] = [
         "https://images.unsplash.com/photo-1622465911894-1e73cbdc293a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
         "https://images.unsplash.com/photo-1760368104753-fe0994f94ff3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
       ],
-      client_id: 4,
+      client_id: "00000000-0000-0000-0000-000000000004",
       created_at: "2026-06-08T11:00:00Z",
       updated_at: "2026-06-08T11:00:00Z",
       extra_notes: "오래된 커피숍 느낌의 따뜻하고 정감 있는 스타일로 부탁드립니다. 영문·한글 로고 버전 모두 제안해 주세요.",
@@ -223,6 +227,7 @@ export const projectsDB: ProjectWithBrand[] = [
     ],
     required_content: ["디지털 광고 템플릿", "배너 광고"],
     reward_amount: 4000000,
+    status: "recruiting",
     additional_info: "비즈니스 플랜 이상 구독 시 전담 마케팅 컨설턴트 배정. 연간 결제 시 2개월 무료.",
     brands: {
       id: 5,
@@ -237,7 +242,7 @@ export const projectsDB: ProjectWithBrand[] = [
         "https://images.unsplash.com/photo-1642132652866-6fa262d3161f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
         "https://images.unsplash.com/photo-1622465911894-1e73cbdc293a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
       ],
-      client_id: 5,
+      client_id: "00000000-0000-0000-0000-000000000005",
       created_at: "2026-06-05T07:00:00Z",
       updated_at: "2026-06-05T07:00:00Z",
       extra_notes: "퍼플·인디고 계열의 브랜드 컬러를 활용하되, 역동적이고 생동감 있는 구성을 원합니다.",
@@ -272,6 +277,7 @@ export const projectsDB: ProjectWithBrand[] = [
     ],
     required_content: ["해외 광고", "디지털 광고 템플릿", "배너 광고"],
     reward_amount: 6000000,
+    status: "recruiting",
     additional_info: "POC(개념 검증) 무료 제공 후 도입 여부 결정 가능. 글로벌 고객사 전용 24/7 다국어 기술 지원 센터 운영.",
     brands: {
       id: 6,
@@ -286,7 +292,7 @@ export const projectsDB: ProjectWithBrand[] = [
         "https://images.unsplash.com/photo-1762163516269-3c143e04175c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
         "https://images.unsplash.com/photo-1642132652866-6fa262d3161f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",
       ],
-      client_id: 6,
+      client_id: "00000000-0000-0000-0000-000000000006",
       created_at: "2026-06-01T06:00:00Z",
       updated_at: "2026-06-01T06:00:00Z",
       extra_notes: "글로벌 B2B 톤앤매너를 유지해 주세요. 영문 카피 포함 버전과 각 국가별 현지화 버전을 제안해 주시면 좋겠습니다.",

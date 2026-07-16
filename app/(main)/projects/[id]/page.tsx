@@ -79,7 +79,7 @@ export default function ContestDetailPage({
     }
     try {
       // ⏳ 나중에: 실제 로그인 프리랜서 ID로 교체
-      await insertProjectApplicant(Number(id), 1);
+      await insertProjectApplicant(Number(id), "00000000-0000-0000-0000-000000000011");
       alert("지원이 완료되었습니다!");
     } catch {
       alert("이미 지원하셨거나 오류가 발생했습니다.");

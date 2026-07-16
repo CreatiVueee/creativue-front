@@ -273,7 +273,7 @@ export async function insertBrand(input: BrandsInsert): Promise<number> {
  */
 export async function insertProjectApplicant(
   projectId: number,
-  freelancerId: number
+  freelancerId: string
 ): Promise<void> {
   const supabase = createClient();
   const { error } = await supabase.from("project_applicants").insert({
