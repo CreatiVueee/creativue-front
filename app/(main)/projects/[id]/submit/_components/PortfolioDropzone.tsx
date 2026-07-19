@@ -47,7 +47,7 @@ export function PortfolioDropzone({ files, onAdd, onRemove }: PortfolioDropzoneP
         tabIndex={0}
         className="flex flex-col items-center justify-center gap-2.5 py-9 rounded-2xl cursor-pointer transition-all"
         style={{
-          border: `2px dashed ${dragOver ? "#b26efd" : "#e9d5ff"}`,
+          border: `2px dashed ${dragOver ? "var(--brand-purple)" : "#e9d5ff"}`,
           background: dragOver ? "#f9f0ff" : "#faf8ff",
         }}
         onClick={() => inputRef.current?.click()}
@@ -58,9 +58,9 @@ export function PortfolioDropzone({ files, onAdd, onRemove }: PortfolioDropzoneP
       >
         <div
           className="w-12 h-12 rounded-xl flex items-center justify-center bg-white"
-          style={{ boxShadow: "0 2px 10px rgba(178,110,253,0.25)" }}
+          style={{ boxShadow: "0 2px 10px color-mix(in srgb, var(--brand-purple) 25%, transparent)" }}
         >
-          <Upload size={19} style={{ color: "#b26efd" }} />
+          <Upload size={19} className="text-brand-purple" />
         </div>
         <p className="text-sm font-bold text-gray-800">파일을 끌어오거나 클릭</p>
         <p className="text-[11px] text-gray-400">PNG · JPG · PDF · 최대 {MAX_SIZE_MB}MB</p>
@@ -79,11 +79,11 @@ export function PortfolioDropzone({ files, onAdd, onRemove }: PortfolioDropzoneP
           {files.map((file, i) => (
             <div
               key={`${file.name}-${i}`}
-              className="flex items-center justify-between px-3.5 py-2.5 rounded-xl"
-              style={{ border: "1.5px solid #b26efd", background: "#f9f0ff" }}
+              className="flex items-center justify-between px-3.5 py-2.5 rounded-xl border-[1.5px] border-brand-purple"
+              style={{ background: "#f9f0ff" }}
             >
               <div className="flex items-center gap-2 min-w-0">
-                <FileText size={14} style={{ color: "#b26efd", flexShrink: 0 }} />
+                <FileText size={14} className="text-brand-purple shrink-0" />
                 <span className="text-xs text-gray-700 font-semibold truncate">{file.name}</span>
               </div>
               <button

@@ -19,13 +19,10 @@ export function SubmissionSuccessView({ projectId, projectTitle }: SubmissionSuc
         transition={{ duration: 0.4 }}
         className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
       >
-        <div className="h-2 w-full" style={{ background: "linear-gradient(90deg, #f3b0f2, #b26efd, #93b5f6)" }} />
+        <div className="h-2 w-full bg-gradient-to-r from-brand-pink via-brand-purple to-brand-blue" />
 
         <div className="px-8 py-10 flex flex-col items-center text-center gap-5">
-          <div
-            className="w-20 h-20 rounded-2xl flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg, #f3b0f2, #b26efd)" }}
-          >
+          <div className="w-20 h-20 rounded-2xl flex items-center justify-center bg-gradient-to-br from-brand-pink to-brand-purple">
             <PartyPopper size={38} className="text-white" />
           </div>
 
@@ -34,7 +31,7 @@ export function SubmissionSuccessView({ projectId, projectTitle }: SubmissionSuc
               출품작이 제출되었습니다!
             </h3>
             <p className="text-sm text-gray-500 leading-relaxed">
-              <span className="font-bold" style={{ color: "#b26efd" }}>
+              <span className="font-bold text-brand-purple">
                 {projectTitle}
               </span>
               에 작품을 성공적으로 제출했습니다.
@@ -46,8 +43,7 @@ export function SubmissionSuccessView({ projectId, projectTitle }: SubmissionSuc
           <div className="w-full space-y-2.5 pt-1">
             <Link
               href={`/projects/${projectId}`}
-              className="w-full py-3 rounded-xl text-white text-sm font-bold flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
-              style={{ background: "linear-gradient(135deg, #b26efd, #93b5f6)" }}
+              className="w-full py-3 rounded-xl text-white text-sm font-bold flex items-center justify-center gap-2 transition-opacity hover:opacity-90 bg-gradient-to-br from-brand-purple to-brand-blue"
             >
               <Eye size={15} />
               공모전 상세로 돌아가기

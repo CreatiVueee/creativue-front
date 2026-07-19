@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { fetchProjectById, insertSubmission } from "@/shared/lib/supabase/queries";
 import { calcDday, formatDday, getDdayColorClass } from "@/shared/lib/utils/date";
+import { formatPrize } from "@/shared/lib/utils/format";
 import { useAuthStore } from "@/features/auth/store/authStore";
 import { useLoginModalStore } from "@/features/auth/store/loginModalStore";
 import { toast } from "sonner";
@@ -17,14 +18,6 @@ import { PortfolioDropzone } from "./_components/PortfolioDropzone";
 import { SubmissionSuccessView } from "./_components/SubmissionSuccessView";
 
 const MAX_LEN = 800;
-
-// ─── Helper ──────────────────────────────────────────────────────────────────
-
-function formatPrize(prize: number) {
-  if (prize >= 10_000_000) return `${prize / 10_000_000}천만원`;
-  if (prize >= 1_000_000) return `${prize / 1_000_000}백만원`;
-  return `${(prize / 10_000).toFixed(0)}만원`;
-}
 
 // ─── Atoms ────────────────────────────────────────────────────────────────────
 
@@ -37,7 +30,7 @@ function RationaleField({
   return (
     <div>
       <label className="flex items-center gap-1.5 text-sm font-bold text-gray-800 mb-2">
-        <span style={{ color: "#b26efd" }}>{icon}</span> {label}
+        <span className="text-brand-purple">{icon}</span> {label}
       </label>
       <div className="relative rounded-xl" style={{ background: "#faf8ff", border: "1px solid #ede8f8" }}>
         <textarea
@@ -124,10 +117,7 @@ export default function ContestSubmitPage({
   if (isLoading) {
     return (
       <div className="min-h-[calc(100vh-68px)] flex items-center justify-center">
-        <div
-          className="w-8 h-8 rounded-full border-[3px] border-t-transparent animate-spin"
-          style={{ borderColor: "#b26efd", borderTopColor: "transparent" }}
-        />
+        <div className="w-8 h-8 rounded-full border-[3px] border-brand-purple border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -155,8 +145,7 @@ export default function ContestSubmitPage({
           <button
             type="button"
             onClick={() => openLoginModal(`/projects/${id}/submit`)}
-            className="text-sm font-bold text-white px-6 py-2.5 rounded-xl transition-opacity hover:opacity-90"
-            style={{ background: "linear-gradient(135deg,#b26efd,#93b5f6)" }}
+            className="text-sm font-bold text-white px-6 py-2.5 rounded-xl transition-opacity hover:opacity-90 bg-gradient-to-br from-brand-purple to-brand-blue"
           >
             로그인하기
           </button>
@@ -181,24 +170,19 @@ export default function ContestSubmitPage({
         <div
           style={{
             position: "absolute", top: -60, right: -60, width: 360, height: 360,
-            borderRadius: "50%", background: "radial-gradient(circle,rgba(178,110,253,0.10) 0%,transparent 65%)",
+            borderRadius: "50%",
+            background: "radial-gradient(circle, color-mix(in srgb, var(--brand-purple) 10%, transparent) 0%, transparent 65%)",
             pointerEvents: "none",
           }}
         />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10" style={{ paddingTop: 44, paddingBottom: 36 }}>
-          <div className="flex items-center gap-2 text-xs font-bold mb-3" style={{ color: "#b26efd" }}>
-            <span style={{ width: 14, height: 2, background: "#b26efd", display: "inline-block" }} />
+          <div className="flex items-center gap-2 text-xs font-bold mb-3 text-brand-purple">
+            <span className="w-3.5 h-0.5 bg-brand-purple inline-block" />
             공모전 리스트 · 출품 제출
           </div>
           <h1 className="font-black text-gray-900 mb-2" style={{ fontSize: "1.8rem" }}>
             공모전{" "}
-            <span
-              style={{
-                background: "linear-gradient(135deg,#b26efd,#93b5f6)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
-            >
+            <span className="bg-gradient-to-br from-brand-purple to-brand-blue bg-clip-text text-transparent">
               작품 제출
             </span>
           </h1>
@@ -220,17 +204,14 @@ export default function ContestSubmitPage({
               </div>
               <div className="px-5 py-5 flex flex-col gap-3">
                 <div className="flex items-center gap-3 mb-1">
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-black text-sm shrink-0"
-                    style={{ background: "linear-gradient(135deg,#f3b0f2,#b26efd)" }}
-                  >
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-black text-sm shrink-0 bg-gradient-to-br from-brand-pink to-brand-purple">
                     {(user?.displayName || user?.email || "?")[0].toUpperCase()}
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-bold text-gray-900 truncate">{user?.email}</p>
                     <span
-                      className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                      style={{ background: "rgba(178,110,253,0.1)", color: "#7c3aed" }}
+                      className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-purple/10"
+                      style={{ color: "#7c3aed" }}
                     >
                       공모전 참가 회원
                     </span>
@@ -283,12 +264,12 @@ export default function ContestSubmitPage({
           {/* ── RIGHT ── */}
           <div className="flex-1 min-w-0 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-7">
             <div className="flex items-center justify-between mb-1">
-              <p className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#b26efd" }}>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-brand-purple">
                 기획 의도서
               </p>
               <span
-                className="text-[11px] font-bold px-2.5 py-1 rounded-full"
-                style={{ background: "rgba(178,110,253,0.1)", color: "#7c3aed" }}
+                className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-brand-purple/10"
+                style={{ color: "#7c3aed" }}
               >
                 3개 항목
               </span>
@@ -327,11 +308,8 @@ export default function ContestSubmitPage({
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="flex items-center gap-2 px-10 py-4 rounded-2xl text-white text-sm font-extrabold transition-opacity hover:opacity-90 disabled:opacity-60"
-            style={{
-              background: "linear-gradient(135deg,#b26efd,#93b5f6)",
-              boxShadow: "0 8px 20px rgba(178,110,253,0.35)",
-            }}
+            className="flex items-center gap-2 px-10 py-4 rounded-2xl text-white text-sm font-extrabold transition-opacity hover:opacity-90 disabled:opacity-60 bg-gradient-to-br from-brand-purple to-brand-blue"
+            style={{ boxShadow: "0 8px 20px color-mix(in srgb, var(--brand-purple) 35%, transparent)" }}
           >
             <Send size={15} />
             {isSubmitting ? "제출 중..." : "출품작 최종 제출하기"}

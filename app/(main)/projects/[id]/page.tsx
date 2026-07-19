@@ -14,17 +14,10 @@ import {
   insertProjectApplicant,
 } from "@/shared/lib/supabase/queries";
 import { calcDday, formatDday, getDdayColorClass } from "@/shared/lib/utils/date";
+import { formatPrize } from "@/shared/lib/utils/format";
 import { useAuthStore } from "@/features/auth/store/authStore";
 import { useLoginModalStore } from "@/features/auth/store/loginModalStore";
 import { ImageGallery } from "./_components/ImageGallery";
-
-// ─── Helper ──────────────────────────────────────────────────────────────────
-
-function formatPrize(prize: number) {
-  if (prize >= 10_000_000) return `${prize / 10_000_000}천만원`;
-  if (prize >= 1_000_000)  return `${prize / 1_000_000}백만원`;
-  return `${(prize / 10_000).toFixed(0)}만원`;
-}
 
 // ─── Atoms ────────────────────────────────────────────────────────────────────
 
