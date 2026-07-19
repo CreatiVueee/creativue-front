@@ -8,9 +8,13 @@ import {
   BrainCircuit, Palette, CheckCircle2,
   ShieldCheck, Clock, AlertCircle, Trophy,
 } from "lucide-react";
-import { ChipButton }   from "@/shared/components/ui/ChipButton";
-import { FileDropzone } from "@/shared/components/ui/FileDropzone";
-import { useAuthStore } from "@/features/auth/store/authStore";
+import { toast }           from "sonner";
+import { ChipButton }      from "@/shared/components/ui/ChipButton";
+import { FileDropzone }    from "@/shared/components/ui/FileDropzone";
+import { PasswordInput }   from "@/shared/components/ui/PasswordInput";
+import { useAuthStore, getAuthErrorMessage, IS_MOCK_AUTH } from "@/features/auth/store/authStore";
+import { createClient }    from "@/shared/lib/supabase/client";
+import { insertUserProfile, insertFreelancer } from "@/shared/lib/supabase/queries";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -51,12 +55,13 @@ const INPUT_STYLE: React.CSSProperties = {
 
 export default function FreelancerSignupPage() {
   const router = useRouter();
-  const { mockLogin } = useAuthStore();
+  const { setAuth } = useAuthStore();
 
   // 공통 필드
-  const [nickname, setNickname] = useState("");
-  const [email,    setEmail]    = useState("");
-  const [role,     setRole]     = useState<FreelancerRole>(null);
+  const [nickname,  setNickname]  = useState("");
+  const [email,     setEmail]     = useState("");
+  const [password,  setPassword]  = useState("");
+  const [role,      setRole]      = useState<FreelancerRole>(null);
 
   // 브랜딩 전문가 필드
   const [career,   setCareer]   = useState("");
@@ -70,21 +75,62 @@ export default function FreelancerSignupPage() {
       prev.includes(val) ? prev.filter((c) => c !== val) : [...prev, val]
     );
 
-  const expertReady  = Boolean(nickname && email && career && certFile);
-  const creatorReady = Boolean(nickname && email && selectedCategories.length > 0);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const expertReady  = Boolean(nickname && email && password && career && certFile) && !isLoading;
+  const creatorReady = Boolean(nickname && email && password && selectedCategories.length > 0) && !isLoading;
+
+  const signupFreelancer = async (roleValue: "expert" | "creator", extraFields: object) => {
+    setIsLoading(true);
+    try {
+      if (IS_MOCK_AUTH) {
+        const mockId = `mock-freelancer-${Date.now()}`;
+        setAuth({ id: mockId, email, displayName: nickname }, "freelancer", mockId);
+        router.push("/projects");
+        return;
+      }
+
+      const supabase = createClient();
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { display_name: nickname } },
+      });
+      if (error) throw new Error(getAuthErrorMessage(error.message));
+      if (!data.user) throw new Error("가입 처리 중 오류가 발생했습니다.");
+
+      await insertUserProfile({
+        id: data.user.id,
+        email,
+        phone_number: "",
+        user_type: "freelancer",
+      });
+
+      const profileId = await insertFreelancer({
+        id: data.user.id,
+        nickname,
+        role: roleValue,
+        profile_url: "",
+        ...extraFields,
+      });
+
+      setAuth({ id: data.user.id, email, displayName: nickname }, "freelancer", profileId);
+      router.push("/projects");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "가입 중 오류가 발생했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleExpertSubmit = () => {
     if (!expertReady) return;
-    // ⏳ 나중에: profiles(role:'freelancer') insert 교체
-    mockLogin(nickname, "freelancer");
-    router.push("/projects");
+    signupFreelancer("expert", { experience_years: career });
   };
 
   const handleCreatorSubmit = () => {
     if (!creatorReady) return;
-    // ⏳ 나중에: profiles(role:'freelancer') insert 교체
-    mockLogin(nickname, "freelancer");
-    router.push("/projects");
+    signupFreelancer("creator", { main_expertise: selectedCategories });
   };
 
   return (
@@ -177,6 +223,16 @@ export default function FreelancerSignupPage() {
                     style={INPUT_STYLE}
                     onFocus={onInputFocus}
                     onBlur={onInputBlur}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 font-semibold mb-1.5">
+                    비밀번호 <span className="text-[#b26efd]">*</span>
+                  </label>
+                  <PasswordInput
+                    value={password}
+                    onChange={setPassword}
+                    placeholder="6자 이상 입력해 주세요"
                   />
                 </div>
               </div>

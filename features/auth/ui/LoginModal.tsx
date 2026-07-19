@@ -14,7 +14,7 @@ import { useAuthStore } from "@/features/auth/store/authStore";
 export function LoginModal() {
   const router = useRouter();
   const { isOpen, redirectPath, close } = useLoginModalStore();
-  const { mockLogin } = useAuthStore();
+  const { login } = useAuthStore();
 
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
@@ -35,21 +35,23 @@ export function LoginModal() {
     resetForm();
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email || !password) {
       setError("이메일과 비밀번호를 모두 입력해 주세요.");
       return;
     }
     setError("");
     setIsLoading(true);
-
-    // ⏳ 나중에: supabase.auth.signInWithPassword 로 교체
-    setTimeout(() => {
-      mockLogin("사용자", "client");
+    try {
+      await login(email, password);
       close();
       resetForm();
       if (redirectPath) router.push(redirectPath);
-    }, 1000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "로그인에 실패했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSignup = () => {

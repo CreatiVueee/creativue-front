@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useBrandReviewStore } from "@/features/auth/store/brandReviewStore";
+import { useAuthStore } from "@/features/auth/store/authStore";
 import { insertBrand, insertProject } from "@/shared/lib/supabase/queries";
 import { BrandReviewPanel } from "./_components/BrandReviewPanel";
 import { ContestFormPanel, type ContestFormState } from "./_components/ContestFormPanel";
@@ -27,6 +28,7 @@ const INITIAL_FORM: ContestFormState = {
 export default function ContestCreatePage() {
   const router = useRouter();
   const { data: brandData } = useBrandReviewStore();
+  const { profileId } = useAuthStore();
 
   const [form, setForm] = useState<ContestFormState>(INITIAL_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,7 +41,7 @@ export default function ContestCreatePage() {
     setIsSubmitting(true);
     try {
       // 1. brands INSERT
-      // ⏳ 나중에: client_id → 실제 로그인 유저 ID, brand_image → Storage 업로드 URL
+      // ⏳ 나중에: brand_image → Supabase Storage 업로드 URL
       const brandId = await insertBrand({
         brand_name: brandData.brandName,
         brand_identity: brandData.brandIdentity,
@@ -48,7 +50,7 @@ export default function ContestCreatePage() {
         brand_image: "",
         industries: brandData.industries,
         input_type: "form",
-        client_id: 1,
+        client_id: profileId!,
         target_market: brandData.market || null,
         target_gender: brandData.gender || null,
         target_ages: brandData.ageGroups.length > 0 ? brandData.ageGroups : null,
