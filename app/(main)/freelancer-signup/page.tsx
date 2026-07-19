@@ -58,10 +58,13 @@ export default function FreelancerSignupPage() {
   const { setAuth } = useAuthStore();
 
   // 공통 필드
-  const [nickname,  setNickname]  = useState("");
-  const [email,     setEmail]     = useState("");
-  const [password,  setPassword]  = useState("");
-  const [role,      setRole]      = useState<FreelancerRole>(null);
+  const [email,           setEmail]           = useState("");
+  const [password,        setPassword]        = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [role,            setRole]            = useState<FreelancerRole>(null);
+
+  const pwMismatch =
+    passwordConfirm.length > 0 && password !== passwordConfirm;
 
   // 브랜딩 전문가 필드
   const [career,   setCareer]   = useState("");
@@ -77,12 +80,16 @@ export default function FreelancerSignupPage() {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const expertReady  = Boolean(nickname && email && password && career && certFile) && !isLoading;
-  const creatorReady = Boolean(nickname && email && password && selectedCategories.length > 0) && !isLoading;
+  const expertReady =
+    Boolean(email && password && passwordConfirm && !pwMismatch && career && certFile) && !isLoading;
+  const creatorReady =
+    Boolean(email && password && passwordConfirm && !pwMismatch && selectedCategories.length > 0) && !isLoading;
 
   const signupFreelancer = async (roleValue: "expert" | "creator", extraFields: object) => {
     setIsLoading(true);
     try {
+      const nickname = email.split("@")[0] || "사용자";
+
       if (IS_MOCK_AUTH) {
         const mockId = `mock-freelancer-${Date.now()}`;
         setAuth({ id: mockId, email, displayName: nickname }, "freelancer", mockId);
@@ -197,21 +204,6 @@ export default function FreelancerSignupPage() {
               <div className="space-y-4 mb-8">
                 <div>
                   <label className="block text-xs text-gray-500 font-semibold mb-1.5">
-                    닉네임 <span className="text-[#b26efd]">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={nickname}
-                    onChange={(e) => setNickname(e.target.value)}
-                    placeholder="활동명을 입력해 주세요"
-                    className={INPUT_CLASS}
-                    style={INPUT_STYLE}
-                    onFocus={onInputFocus}
-                    onBlur={onInputBlur}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 font-semibold mb-1.5">
                     이메일 주소 <span className="text-[#b26efd]">*</span>
                   </label>
                   <input
@@ -234,6 +226,29 @@ export default function FreelancerSignupPage() {
                     onChange={setPassword}
                     placeholder="6자 이상 입력해 주세요"
                   />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 font-semibold mb-1.5">
+                    비밀번호 확인 <span className="text-[#b26efd]">*</span>
+                  </label>
+                  <PasswordInput
+                    value={passwordConfirm}
+                    onChange={setPasswordConfirm}
+                    placeholder="비밀번호를 다시 입력해 주세요"
+                    hasError={pwMismatch}
+                  />
+                  <AnimatePresence>
+                    {pwMismatch && (
+                      <motion.p
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        className="text-[11px] text-red-400 mt-1.5 font-medium"
+                      >
+                        비밀번호가 일치하지 않아요.
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
 
