@@ -12,8 +12,11 @@ export type BrandsInsert      = Database["public"]["Tables"]["brands"]["Insert"]
 export type ProjectsInsert    = Database["public"]["Tables"]["projects"]["Insert"];
 export type SubmissionsInsert = Database["public"]["Tables"]["project_submissions"]["Insert"];
 
-/** projects + brands JOIN 결과 타입 (fetchProjects / fetchProjectById 반환값) */
-export type ProjectWithBrand = ProjectRow & { brands: BrandRow };
+/** projects + brands + project_applicants COUNT JOIN 결과 타입 (fetchProjects / fetchProjectById 반환값) */
+export type ProjectWithBrand = ProjectRow & { 
+  brands: BrandRow;
+  project_applicants?: { count: number }[];
+};
 
 export type SubmissionWithFreelancer =
   Database["public"]["Tables"]["project_submissions"]["Row"] & {
@@ -55,11 +58,12 @@ export type SubmissionWithFreelancer =
  *
  *  DB 없는 필드 기본값:
  *  hot        → false  (DB에 컬럼 없음, 추후 추가 예정)
- *  applicants → 0      (project_applicants COUNT 쿼리로 교체 예정)
+ *  applicants → project_applicants COUNT 쿼리 매핑
  *  brandColors → []    (DB에 컬럼 없음)
  */
 export function adaptProjectToContest(p: ProjectWithBrand): Contest {
   const b = p.brands;
+  const applicantCount = p.project_applicants?.[0]?.count ?? 0;
   return {
     id:           p.id,
     brand:        b.brand_name,
@@ -67,7 +71,7 @@ export function adaptProjectToContest(p: ProjectWithBrand): Contest {
     contentTypes: p.content_categories,
     deadline:     p.deadline_date,
     prize:        p.reward_amount,
-    applicants:   0,        // ⏳ COUNT(project_applicants) 쿼리로 교체
+    applicants:   applicantCount,
     hot:          false,    // ⏳ DB 컬럼 추가 후 연동
     aiAllowed:    p.is_ai_allowed,
     image:        b.brand_image,
@@ -96,51 +100,32 @@ export function adaptProjectToContest(p: ProjectWithBrand): Contest {
 // ─── Projects ─────────────────────────────────────────────────────────────────
 
 /**
- * 공모전 목록 전체 조회 (brands JOIN 포함)
+ * 공모전 목록 전체 조회 (brands JOIN 및 project_applicants COUNT 포함)
  *
  * Supabase REST:
- *   GET /rest/v1/projects?select=*,brands(*)&order=created_at.desc
+ *   GET /rest/v1/projects?select=*,brands(*),project_applicants(count)&order=created_at.desc
  *
  * 헤더:
  *   apikey: NEXT_PUBLIC_SUPABASE_ANON_KEY
  *   Authorization: Bearer NEXT_PUBLIC_SUPABASE_ANON_KEY
  *
- * 응답 예시:
- *   [
- *     {
- *       "id": 1,
- *       "title": "TechStart Inc. 공모전",
- *       "brand_id": 1,
- *       "content_categories": ["로고", "DA"],
- *       "content_purpose": ["브랜드 인지도 향상"],
- *       "deadline_date": "2026-06-30",
- *       "reward_amount": 3000000,
- *       "is_ai_allowed": true,
- *       "price_range": "월 구독 ₩49,000 ~ ₩299,000",
- *       "differentiation_point": "...",
- *       "paid_amount": 0,
- *       "brands": { "id": 1, "brand_name": "TechStart Inc.", ... }
- *     },
- *     ...
- *   ]
- *
- * RLS 조건: projects/brands 테이블 모두 anon SELECT 정책 필요
+ * RLS 조건: projects/brands/project_applicants 테이블 모두 anon SELECT 정책 필요
  */
 export async function fetchProjects(): Promise<ProjectWithBrand[]> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("projects")
-    .select("*, brands(*)")
+    .select("*, brands(*), project_applicants(count)")
     .order("created_at", { ascending: false });
   if (error) throw error;
   return (data ?? []) as ProjectWithBrand[];
 }
 
 /**
- * 공모전 단건 조회 (brands JOIN 포함)
+ * 공모전 단건 조회 (brands JOIN 및 project_applicants COUNT 포함)
  *
  * Supabase REST:
- *   GET /rest/v1/projects?id=eq.{id}&select=*,brands(*)&limit=1
+ *   GET /rest/v1/projects?id=eq.{id}&select=*,brands(*),project_applicants(count)&limit=1
  *
  * 파라미터:
  *   id: number — projects.id (PK)
@@ -155,7 +140,7 @@ export async function fetchProjectById(
   const supabase = createClient();
   const { data, error } = await supabase
     .from("projects")
-    .select("*, brands(*)")
+    .select("*, brands(*), project_applicants(count)")
     .eq("id", id)
     .single();
   if (error) return null;
