@@ -7,9 +7,12 @@ import type { Contest } from "@/shared/types";
 type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
 type BrandRow   = Database["public"]["Tables"]["brands"]["Row"];
 
-export type BrandsInsert      = Database["public"]["Tables"]["brands"]["Insert"];
-export type ProjectsInsert    = Database["public"]["Tables"]["projects"]["Insert"];
-export type SubmissionsInsert = Database["public"]["Tables"]["project_submissions"]["Insert"];
+export type BrandsInsert       = Database["public"]["Tables"]["brands"]["Insert"];
+export type ProjectsInsert     = Database["public"]["Tables"]["projects"]["Insert"];
+export type SubmissionsInsert  = Database["public"]["Tables"]["project_submissions"]["Insert"];
+export type ClientsInsert      = Database["public"]["Tables"]["clients"]["Insert"];
+export type FreelancersInsert  = Database["public"]["Tables"]["freelancers"]["Insert"];
+export type UserProfilesInsert = Database["public"]["Tables"]["user_profiles"]["Insert"];
 
 /** projects + brands JOIN 결과 타입 (fetchProjects / fetchProjectById 반환값) */
 export type ProjectWithBrand = ProjectRow & { brands: BrandRow };
@@ -90,6 +93,71 @@ export function adaptProjectToContest(p: ProjectWithBrand): Contest {
     },
     additionalRequests: b.extra_notes ?? "",
   };
+}
+
+// ─── Auth Profiles ────────────────────────────────────────────────────────────
+
+/**
+ * user_profiles 테이블 등록 (회원가입 1단계 — clients/freelancers INSERT 전에 필요)
+ * `id`는 반드시 auth.users.id(로그인 유저 UUID)와 동일한 값이어야 한다.
+ */
+export async function insertUserProfile(input: UserProfilesInsert): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.from("user_profiles").insert(input);
+  if (error) throw error;
+}
+
+/** auth.users.id로 clients 프로필 조회 (clients.id === auth.users.id) */
+export async function fetchClientByUserId(userId: string) {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("clients")
+    .select("id, interested_fields")
+    .eq("id", userId)
+    .single();
+  // PGRST116 = 매칭되는 행이 없음 (해당 유저가 client가 아닌 정상적인 경우)
+  if (error && error.code !== "PGRST116") {
+    console.error("[fetchClientByUserId] 조회 실패:", error);
+  }
+  return data;
+}
+
+/** auth.users.id로 freelancers 프로필 조회 (freelancers.id === auth.users.id) */
+export async function fetchFreelancerByUserId(userId: string) {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("freelancers")
+    .select("id, nickname, role")
+    .eq("id", userId)
+    .single();
+  if (error && error.code !== "PGRST116") {
+    console.error("[fetchFreelancerByUserId] 조회 실패:", error);
+  }
+  return data;
+}
+
+/** 클라이언트 프로필 등록 (회원가입 2단계, input.id === auth.users.id) */
+export async function insertClient(input: ClientsInsert): Promise<string> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("clients")
+    .insert(input)
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data.id;
+}
+
+/** 프리랜서 프로필 등록 (회원가입 2단계, input.id === auth.users.id) */
+export async function insertFreelancer(input: FreelancersInsert): Promise<string> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("freelancers")
+    .insert(input)
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data.id;
 }
 
 // ─── Projects ─────────────────────────────────────────────────────────────────
@@ -260,7 +328,7 @@ export async function insertBrand(input: BrandsInsert): Promise<number> {
  *
  * body 필드:
  *   project_id    number — projects.id (FK)
- *   freelancer_id number — freelancers.id (FK) ⚠️ 현재 1 하드코딩, 실 인증 후 교체
+ *   freelancer_id uuid   — freelancers.id (FK, === auth.users.id)
  *   applied_at    string — 지원 시각 ISO string (자동 생성)
  *
  * 응답: void (성공 시 204)
@@ -302,8 +370,8 @@ export async function insertProjectApplicant(
  *     {
  *       "id": 1,
  *       "project_id": 1,
- *       "freelancer_id": 1,
- *       "portfolio_file_url": "https://storage.supabase.co/...",
+ *       "freelancer_id": "8c6e7871-dbfe-41ee-9826-e88440974e3f",
+ *       "portfolio_file_urls": ["https://storage.supabase.co/..."],
  *       "is_selected": false,
  *       "tone_and_manner": "모던하고 심플한 느낌",
  *       "color_system_rationale": "블루 계열로 신뢰감 표현",
@@ -336,9 +404,9 @@ export async function fetchSubmissions(
  *   Prefer: return=representation
  *
  * 필수 body 필드:
- *   project_id          number — projects.id (FK)
- *   freelancer_id       number — freelancers.id (FK) ⚠️ 실 인증 후 로그인 유저 ID로 교체
- *   portfolio_file_url  string — 제출 파일 URL (Supabase Storage 업로드 후 URL)
+ *   project_id           number   — projects.id (FK)
+ *   freelancer_id        uuid     — freelancers.id (FK, === auth.users.id)
+ *   portfolio_file_urls  string[] — 제출 파일 URL 배열 (Supabase Storage 업로드 후 URL)
  *
  * 선택 body 필드:
  *   tone_and_manner         string | null — 톤앤매너 설명

@@ -9,7 +9,7 @@ import { useAuthStore } from "@/features/auth/store/authStore";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { mockLogin } = useAuthStore();
+  const { login } = useAuthStore();
 
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
@@ -17,7 +17,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError]       = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
       setError("이메일과 비밀번호를 모두 입력해 주세요.");
@@ -25,12 +25,14 @@ export default function LoginPage() {
     }
     setError("");
     setIsLoading(true);
-
-    // ⏳ 나중에: supabase.auth.signInWithPassword 로 교체
-    setTimeout(() => {
-      mockLogin("사용자", "client");
+    try {
+      await login(email, password);
       router.push("/client-profile");
-    }, 1200);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "로그인에 실패했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

@@ -132,7 +132,7 @@ export const projectsDB: ProjectWithBrand[] = [
       brand_name: "Glow Beauty",
       brand_identity: "감각적이고 자신감 넘치는 K-뷰티 럭셔리 브랜드",
       brand_story:
-        "Glow Beauty는 2019년 론칭한 프리미엄 K-뷰티 브랜드입니다. '당신의 빛을 발견하라'는 메시지를 중심으로, 피부 본연의 아름다움을 극대화하는 스킨케어 라 선보이고 있습니다.",
+        "Glow Beauty는 2019년 론칭한 프리미엄 K-뷰티 브랜드입니다. '당신의 빛을 발견하라'는 메시지를 중심으로, 피부 본연의 아름다움을 극대화하는 스킨케어 라인을 선보이고 있습니다.",
       brand_core_keywords: ["글로우", "럭셔리", "자신감", "감각적", "K-뷰티"],
       brand_image:
         "https://images.unsplash.com/photo-1776015036380-4022fe844ed8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080",

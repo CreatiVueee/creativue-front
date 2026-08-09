@@ -9,10 +9,13 @@ import {
   Sparkles, CheckCircle2, Gift, ShieldCheck, Zap, Star,
   type LucideIcon,
 } from "lucide-react";
+import { toast }             from "sonner";
 import { PasswordInput }      from "@/shared/components/ui/PasswordInput";
 import { ChipButton }         from "@/shared/components/ui/ChipButton";
 import { SignupSuccessModal } from "@/features/auth/ui/SignupSuccessModal";
-import { useAuthStore }       from "@/features/auth/store/authStore";
+import { useAuthStore, getAuthErrorMessage, IS_MOCK_AUTH } from "@/features/auth/store/authStore";
+import { createClient }       from "@/shared/lib/supabase/client";
+import { insertUserProfile, insertClient } from "@/shared/lib/supabase/queries";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -69,7 +72,7 @@ const INPUT_STYLE: React.CSSProperties = {
 
 export default function ClientSignupPage() {
   const router = useRouter();
-  const { mockLogin } = useAuthStore();
+  const { setAuth } = useAuthStore();
 
   const [userId,           setUserId]           = useState("");
   const [password,         setPassword]         = useState("");
@@ -79,6 +82,7 @@ export default function ClientSignupPage() {
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [agreed,           setAgreed]           = useState(false);
   const [showModal,        setShowModal]        = useState(false);
+  const [isLoading,        setIsLoading]        = useState(false);
 
   const pwMismatch =
     passwordConfirm.length > 0 && password !== passwordConfirm;
@@ -86,18 +90,54 @@ export default function ClientSignupPage() {
   const isReady =
     Boolean(userId && password && passwordConfirm && !pwMismatch && email && phone) &&
     selectedServices.length > 0 &&
-    agreed;
+    agreed &&
+    !isLoading;
 
   const toggleService = (val: string) =>
     setSelectedServices((prev) =>
       prev.includes(val) ? prev.filter((s) => s !== val) : [...prev, val]
     );
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!isReady) return;
-    // ⏳ 나중에: supabase.auth.signUp + profiles(role:'client') insert 교체
-    mockLogin(userId, "client");
-    setShowModal(true);
+    setIsLoading(true);
+    try {
+      if (IS_MOCK_AUTH) {
+        const mockId = `mock-client-${Date.now()}`;
+        setAuth({ id: mockId, email, displayName: userId }, "client", mockId);
+        setShowModal(true);
+        return;
+      }
+
+      const supabase = createClient();
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { display_name: userId } },
+      });
+      if (error) throw new Error(getAuthErrorMessage(error.message));
+      if (!data.user) throw new Error("가입 처리 중 오류가 발생했습니다.");
+
+      await insertUserProfile({
+        id: data.user.id,
+        user_id: userId,
+        email,
+        phone_number: phone,
+        user_type: "client",
+      });
+
+      const profileId = await insertClient({
+        id: data.user.id,
+        interested_fields: selectedServices,
+      });
+
+      setAuth({ id: data.user.id, email, displayName: userId }, "client", profileId);
+      setShowModal(true);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "가입 중 오류가 발생했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

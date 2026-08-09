@@ -14,17 +14,10 @@ import {
   insertProjectApplicant,
 } from "@/shared/lib/supabase/queries";
 import { calcDday, formatDday, getDdayColorClass } from "@/shared/lib/utils/date";
+import { formatPrize } from "@/shared/lib/utils/format";
 import { useAuthStore } from "@/features/auth/store/authStore";
 import { useLoginModalStore } from "@/features/auth/store/loginModalStore";
 import { ImageGallery } from "./_components/ImageGallery";
-
-// ─── Helper ──────────────────────────────────────────────────────────────────
-
-function formatPrize(prize: number) {
-  if (prize >= 10_000_000) return `${prize / 10_000_000}천만원`;
-  if (prize >= 1_000_000)  return `${prize / 1_000_000}백만원`;
-  return `${(prize / 10_000).toFixed(0)}만원`;
-}
 
 // ─── Atoms ────────────────────────────────────────────────────────────────────
 
@@ -60,7 +53,7 @@ export default function ContestDetailPage({
 }) {
   const { id } = use(params);
   const router = useRouter();
-  const { isLoggedIn } = useAuthStore();
+  const { isLoggedIn, role, profileId } = useAuthStore();
   const openLoginModal = useLoginModalStore((s) => s.open);
 
   const { data: projectRaw, isLoading } = useQuery({
@@ -77,9 +70,12 @@ export default function ContestDetailPage({
       openLoginModal(`/projects/${id}`);
       return;
     }
+    if (role !== "freelancer" || !profileId) {
+      alert("프리랜서 계정으로만 지원할 수 있습니다.");
+      return;
+    }
     try {
-      // ⏳ 나중에: 실제 로그인 프리랜서 ID로 교체
-      await insertProjectApplicant(Number(id), "00000000-0000-0000-0000-000000000011");
+      await insertProjectApplicant(Number(id), profileId);
       alert("지원이 완료되었습니다!");
     } catch {
       alert("이미 지원하셨거나 오류가 발생했습니다.");

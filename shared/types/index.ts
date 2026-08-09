@@ -56,6 +56,29 @@ export interface Expert {
   intro: string;
 }
 
+// ─── Submission (PreVue) ──────────────────────────────────────────────────────
+
+export interface SubmissionRationale {
+  tone: string;
+  color: string;
+  layout: string;
+  copy: string;
+  extra: string;
+}
+
+export interface Submission {
+  id: number;
+  creatorHandle: string;
+  title: string;
+  description: string;
+  tags: string[];
+  type: string;
+  /** ISO date string (e.g. "2026-05-02") */
+  submittedAt: string;
+  image: string;
+  rationale: SubmissionRationale;
+}
+
 // ─── Carousel (Landing Problem Slides) ───────────────────────────────────────
 
 export interface CarouselSlide {
