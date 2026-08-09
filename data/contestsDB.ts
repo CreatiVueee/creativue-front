@@ -24,6 +24,7 @@ export const projectsDB: ProjectWithBrand[] = [
     ],
     required_content: ["로고", "디지털 광고 템플릿"],
     reward_amount: 3000000,
+    status: "recruiting",
     additional_info:
       "현재 무료 체험 30일 제공 중이며, 연간 결제 시 20% 할인 혜택이 있습니다.",
     brands: {
@@ -73,6 +74,7 @@ export const projectsDB: ProjectWithBrand[] = [
     ],
     required_content: ["제품 디자인", "상세페이지"],
     reward_amount: 2000000,
+    status: "judging",
     additional_info:
       "B2B 기업 고객에게는 전용 패키징 디자인 커스터마이징 서비스도 제공하며, MOQ는 500개입니다.",
     brands: {
@@ -122,6 +124,7 @@ export const projectsDB: ProjectWithBrand[] = [
     ],
     required_content: ["DA", "배너 광고", "해외 광고"],
     reward_amount: 5000000,
+    status: "recruiting",
     additional_info:
       "일본 라쿠텐·라자다 동남아 입점 완료. 면세점 전용 한정 패키지 라인업도 운영 중입니다.",
     brands: {
@@ -171,6 +174,7 @@ export const projectsDB: ProjectWithBrand[] = [
     ],
     required_content: ["로고", "포스터 템플릿"],
     reward_amount: 1500000,
+    status: "recruiting",
     additional_info: "멤버십 가입 시 음료 10% 상시 할인 적용. 매월 한정판 시즌 메뉴 운영 중.",
     brands: {
       id: 4,
@@ -219,6 +223,7 @@ export const projectsDB: ProjectWithBrand[] = [
     ],
     required_content: ["디지털 광고 템플릿", "배너 광고"],
     reward_amount: 4000000,
+    status: "recruiting",
     additional_info: "비즈니스 플랜 이상 구독 시 전담 마케팅 컨설턴트 배정. 연간 결제 시 2개월 무료.",
     brands: {
       id: 5,
@@ -267,6 +272,7 @@ export const projectsDB: ProjectWithBrand[] = [
     ],
     required_content: ["해외 광고", "디지털 광고 템플릿", "배너 광고"],
     reward_amount: 6000000,
+    status: "recruiting",
     additional_info: "POC(개념 검증) 무료 제공 후 도입 여부 결정 가능. 글로벌 고객사 전용 24/7 다국어 기술 지원 센터 운영.",
     brands: {
       id: 6,

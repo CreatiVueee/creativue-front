@@ -71,7 +71,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          brand_core_keywords: string[]
+          brand_core_keywords?: string[]
           brand_identity: string
           brand_image: string
           brand_name: string
@@ -81,7 +81,7 @@ export type Database = {
           extra_notes?: string | null
           extra_notes_etc?: string | null
           id?: number
-          industries: string[]
+          industries?: string[]
           input_type: string
           logo_file_url?: string[] | null
           target_ages?: string[] | null
@@ -133,14 +133,22 @@ export type Database = {
         Insert: {
           created_at?: string
           id: string
-          interested_fields: string[]
+          interested_fields?: string[]
         }
         Update: {
           created_at?: string
           id?: string
           interested_fields?: string[]
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clients_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       freelancers: {
         Row: {
@@ -176,7 +184,15 @@ export type Database = {
           role?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "freelancers_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       menus: {
         Row: {
@@ -189,7 +205,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          id?: number
+          id: number
           is_visible: boolean
           link_url: string
           name: string
@@ -213,7 +229,7 @@ export type Database = {
           project_id: number
         }
         Insert: {
-          applied_at: string
+          applied_at?: string
           created_at?: string
           freelancer_id: string
           project_id: number
@@ -262,7 +278,7 @@ export type Database = {
           id?: number
           is_selected?: boolean
           layout_rationale?: string | null
-          portfolio_file_urls: string[]
+          portfolio_file_urls?: string[]
           project_id: number
           tone_and_manner?: string | null
         }
@@ -309,27 +325,29 @@ export type Database = {
           paid_amount: number
           price_range: string
           qc_count: number | null
-          reference_image_url: string[]
+          reference_image_url: string[] | null
           required_content: string[]
           reward_amount: number
+          status: string
           title: string
         }
         Insert: {
           additional_info?: string | null
           brand_id: number
-          content_categories: string[]
-          content_purpose: string[]
+          content_categories?: string[]
+          content_purpose?: string[]
           created_at?: string
           deadline_date: string
           differentiation_point: string
           id?: number
-          is_ai_allowed: boolean
-          paid_amount: number
+          is_ai_allowed?: boolean
+          paid_amount?: number
           price_range: string
           qc_count?: number | null
-          reference_image_url: string[]
-          required_content: string[]
-          reward_amount: number
+          reference_image_url?: string[] | null
+          required_content?: string[]
+          reward_amount?: number
+          status?: string
           title: string
         }
         Update: {
@@ -345,9 +363,10 @@ export type Database = {
           paid_amount?: number
           price_range?: string
           qc_count?: number | null
-          reference_image_url?: string[]
+          reference_image_url?: string[] | null
           required_content?: string[]
           reward_amount?: number
+          status?: string
           title?: string
         }
         Relationships: [
@@ -385,7 +404,15 @@ export type Database = {
           user_id?: string | null
           user_type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
