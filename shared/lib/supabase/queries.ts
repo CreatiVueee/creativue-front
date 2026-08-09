@@ -6,6 +6,7 @@ import type { Contest } from "@/shared/types";
 
 type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
 type BrandRow   = Database["public"]["Tables"]["brands"]["Row"];
+export type BannerRow = Database["public"]["Tables"]["banner"]["Row"];
 
 export type BrandsInsert      = Database["public"]["Tables"]["brands"]["Insert"];
 export type ProjectsInsert    = Database["public"]["Tables"]["projects"]["Insert"];
@@ -410,4 +411,22 @@ export async function selectWinner(
     .update({ is_selected: true })
     .eq("id", submissionId);
   if (error) throw error;
+}
+
+// ─── Banners ──────────────────────────────────────────────────────────────────
+
+/**
+ * 메인 랜딩페이지 슬라이드 배너 전체 조회
+ * 
+ * Supabase REST:
+ *   GET /rest/v1/banner?select=*&order=sort_order.asc
+ */
+export async function fetchBanners(): Promise<BannerRow[]> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("banner")
+    .select("*")
+    .order("sort_order", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
 }
