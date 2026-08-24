@@ -141,19 +141,32 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           let nickname = data.user.user_metadata?.user_id ?? "사용자";
           const userRole = data.user.user_metadata?.user_type ?? "client";
 
+          // 1. 공통 프로필 테이블에서 user_id 조회
+          const { data: profile } = await supabase
+            .from("user_profiles")
+            .select("user_id")
+            .eq("id", data.user.id)
+            .single();
+          if (profile?.user_id) {
+            nickname = profile.user_id;
+          }
+
+          // 2. 프리랜서인 경우 freelancers 테이블의 nickname 조회 (있을 경우 덮어씌움)
           if (userRole === "freelancer") {
-            const { data: profile } = await supabase
+            const { data: freelancerProfile } = await supabase
               .from("freelancers")
               .select("nickname")
               .eq("id", data.user.id)
               .single();
-            if (profile?.nickname) nickname = profile.nickname;
+            if (freelancerProfile?.nickname) {
+              nickname = freelancerProfile.nickname;
+            }
           }
 
           const loggedInUser: User = {
             id: data.user.id,
             email: data.user.email!,
-            user_id: data.user.user_metadata?.user_id ?? "user",
+            user_id: nickname,
             user_type: userRole,
             name: nickname,
           };
@@ -185,19 +198,32 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             let nickname = session.user.user_metadata?.user_id ?? "사용자";
             const userRole = session.user.user_metadata?.user_type ?? "client";
 
+            // 1. 공통 프로필 테이블에서 user_id 조회
+            const { data: profile } = await supabase
+              .from("user_profiles")
+              .select("user_id")
+              .eq("id", session.user.id)
+              .single();
+            if (profile?.user_id) {
+              nickname = profile.user_id;
+            }
+
+            // 2. 프리랜서인 경우 freelancers 테이블의 nickname 조회
             if (userRole === "freelancer") {
-              const { data: profile } = await supabase
+              const { data: freelancerProfile } = await supabase
                 .from("freelancers")
                 .select("nickname")
                 .eq("id", session.user.id)
                 .single();
-              if (profile?.nickname) nickname = profile.nickname;
+              if (freelancerProfile?.nickname) {
+                nickname = freelancerProfile.nickname;
+              }
             }
 
             const currentUser: User = {
               id: session.user.id,
               email: session.user.email!,
-              user_id: session.user.user_metadata?.user_id ?? "user",
+              user_id: nickname,
               user_type: userRole,
               name: nickname,
             };
