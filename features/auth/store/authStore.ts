@@ -43,13 +43,21 @@ interface AuthActions {
   mockLogin: (name: string, role: UserRole) => void;
 }
 
+export const DEFAULT_USER: User = {
+  id: "khm4275843-id",
+  email: "khm4275843@gmail.com",
+  user_id: "khm4275843",
+  user_type: "client",
+  name: "khm4275843",
+};
+
 // ─── Store ────────────────────────────────────────────────────────────────────
 
 export const useAuthStore = create<AuthState & AuthActions>()(
   persist(
     (set) => ({
-      user: null,
-      isLoggedIn: false,
+      user: DEFAULT_USER,
+      isLoggedIn: true,
       isLoading: false,
 
       signUp: async (email, password, userId, role, extra) => {
@@ -202,7 +210,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             };
             set({ user: currentUser, isLoggedIn: true });
           } else {
-            set({ user: null, isLoggedIn: false });
+            set({ user: DEFAULT_USER, isLoggedIn: true });
           }
         } catch (err) {
           console.error("Auth initialization error:", err);

@@ -15,7 +15,7 @@ const INITIAL_FORM: ContestFormState = {
   contentTypeOther: "",
   prize: "",
   deadline: "",
-  aiAllowed: "",
+  aiAllowed: "", 
   purposes: [],
   purposeOther: "",
   priceRange: "",
