@@ -173,6 +173,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           set({ user: loggedInUser, isLoggedIn: true });
         } catch (err) {
           console.error("Login error:", err);
+          set({ user: null, isLoggedIn: false });
           throw err;
         } finally {
           set({ isLoading: false });

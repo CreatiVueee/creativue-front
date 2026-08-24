@@ -2,7 +2,8 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuthStore } from "@/features/auth/store/authStore";
 
 // DevTools: SSR 비활성화 + lazy 로드 (Next.js App Router 호환)
 const ReactQueryDevtools = dynamic(
@@ -25,6 +26,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
         },
       })
   );
+
+  const initializeAuth = useAuthStore((s) => s.initialize);
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
 
   return (
     <QueryClientProvider client={queryClient}>
