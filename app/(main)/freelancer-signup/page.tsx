@@ -8,9 +8,10 @@ import {
   BrainCircuit, Palette, CheckCircle2,
   ShieldCheck, Clock, AlertCircle, Trophy,
 } from "lucide-react";
-import { ChipButton }   from "@/shared/components/ui/ChipButton";
-import { FileDropzone } from "@/shared/components/ui/FileDropzone";
-import { useAuthStore } from "@/features/auth/store/authStore";
+import { ChipButton }    from "@/shared/components/ui/ChipButton";
+import { FileDropzone }  from "@/shared/components/ui/FileDropzone";
+import { PasswordInput } from "@/shared/components/ui/PasswordInput";
+import { useAuthStore }  from "@/features/auth/store/authStore";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -51,12 +52,15 @@ const INPUT_STYLE: React.CSSProperties = {
 
 export default function FreelancerSignupPage() {
   const router = useRouter();
-  const { mockLogin } = useAuthStore();
+  const { signUp, isLoading } = useAuthStore();
 
   // 공통 필드
-  const [nickname, setNickname] = useState("");
-  const [email,    setEmail]    = useState("");
-  const [role,     setRole]     = useState<FreelancerRole>(null);
+  const [nickname,        setNickname]        = useState("");
+  const [email,           setEmail]            = useState("");
+  const [password,        setPassword]        = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [role,            setRole]            = useState<FreelancerRole>(null);
+  const [error,           setError]           = useState("");
 
   // 브랜딩 전문가 필드
   const [career,   setCareer]   = useState("");
@@ -70,21 +74,43 @@ export default function FreelancerSignupPage() {
       prev.includes(val) ? prev.filter((c) => c !== val) : [...prev, val]
     );
 
-  const expertReady  = Boolean(nickname && email && career && certFile);
-  const creatorReady = Boolean(nickname && email && selectedCategories.length > 0);
+  const pwMismatch = passwordConfirm.length > 0 && password !== passwordConfirm;
 
-  const handleExpertSubmit = () => {
-    if (!expertReady) return;
-    // ⏳ 나중에: profiles(role:'freelancer') insert 교체
-    mockLogin(nickname, "freelancer");
-    router.push("/projects");
+  const expertReady  = Boolean(nickname && email && password && passwordConfirm && !pwMismatch && career && certFile);
+  const creatorReady = Boolean(nickname && email && password && passwordConfirm && !pwMismatch && selectedCategories.length > 0);
+
+  const handleExpertSubmit = async () => {
+    if (!expertReady || isLoading) return;
+    try {
+      setError("");
+      await signUp(email, password, nickname, "freelancer", {
+        nickname,
+        role: "expert",
+        experienceYears: career,
+        mainExpertise: ["branding"],
+      });
+      router.push("/projects");
+    } catch (err: any) {
+      console.error("Expert signup error:", err);
+      setError(err.message || "전문가 가입 신청에 실패했습니다. 다시 시도해 주세요.");
+    }
   };
 
-  const handleCreatorSubmit = () => {
-    if (!creatorReady) return;
-    // ⏳ 나중에: profiles(role:'freelancer') insert 교체
-    mockLogin(nickname, "freelancer");
-    router.push("/projects");
+  const handleCreatorSubmit = async () => {
+    if (!creatorReady || isLoading) return;
+    try {
+      setError("");
+      await signUp(email, password, nickname, "freelancer", {
+        nickname,
+        role: "creator",
+        mainExpertise: selectedCategories,
+        experienceYears: "신입",
+      });
+      router.push("/projects");
+    } catch (err: any) {
+      console.error("Creator signup error:", err);
+      setError(err.message || "창작자 가입에 실패했습니다. 다시 시도해 주세요.");
+    }
   };
 
   return (
@@ -158,6 +184,7 @@ export default function FreelancerSignupPage() {
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
                     placeholder="활동명을 입력해 주세요"
+                    disabled={isLoading}
                     className={INPUT_CLASS}
                     style={INPUT_STYLE}
                     onFocus={onInputFocus}
@@ -173,11 +200,47 @@ export default function FreelancerSignupPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="example@email.com"
+                    disabled={isLoading}
                     className={INPUT_CLASS}
                     style={INPUT_STYLE}
                     onFocus={onInputFocus}
                     onBlur={onInputBlur}
                   />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 font-semibold mb-1.5">
+                    비밀번호 <span style={{ color: "#b26efd" }}>*</span>
+                  </label>
+                  <PasswordInput
+                    value={password}
+                    onChange={setPassword}
+                    placeholder="8자 이상 입력해 주세요"
+                    disabled={isLoading}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 font-semibold mb-1.5">
+                    비밀번호 확인 <span style={{ color: "#b26efd" }}>*</span>
+                  </label>
+                  <PasswordInput
+                    value={passwordConfirm}
+                    onChange={setPasswordConfirm}
+                    placeholder="비밀번호를 다시 입력해 주세요"
+                    hasError={pwMismatch}
+                    disabled={isLoading}
+                  />
+                  <AnimatePresence>
+                    {pwMismatch && (
+                      <motion.p
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        className="text-[11px] text-red-400 mt-1.5 font-medium"
+                      >
+                        비밀번호가 일치하지 않아요.
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
 
@@ -382,22 +445,42 @@ export default function FreelancerSignupPage() {
                     </div>
 
                     <div className="mt-auto space-y-2 pt-2">
+                      {/* 에러 메시지 표시 */}
+                      <AnimatePresence>
+                        {error && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            className="rounded-xl px-4 py-2.5 text-xs font-semibold text-red-500 bg-red-50 border border-red-200"
+                          >
+                            {error}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
                       <button
                         type="button"
-                        disabled={!expertReady}
+                        disabled={!expertReady || isLoading}
                         onClick={handleExpertSubmit}
                         className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-bold transition-all active:scale-[0.98]"
                         style={{
-                          background: expertReady
+                          background: expertReady && !isLoading
                             ? "linear-gradient(135deg, #f3b0f2, #b26efd)"
                             : "#e5e7eb",
-                          color: expertReady ? "#fff" : "#9ca3af",
-                          cursor: expertReady ? "pointer" : "not-allowed",
+                          color: expertReady && !isLoading ? "#fff" : "#9ca3af",
+                          cursor: expertReady && !isLoading ? "pointer" : "not-allowed",
                         }}
                       >
-                        <ShieldCheck size={16} />
-                        승인 신청하기
-                        <ArrowRight size={14} />
+                        {isLoading ? (
+                          "승인 신청 중..."
+                        ) : (
+                          <>
+                            <ShieldCheck size={16} />
+                            승인 신청하기
+                            <ArrowRight size={14} />
+                          </>
+                        )}
                       </button>
                       <div className="flex items-center justify-center gap-1.5">
                         <Clock size={11} className="text-gray-300" />
@@ -472,23 +555,43 @@ export default function FreelancerSignupPage() {
                       </div>
                     </div>
 
-                    <div className="mt-auto pt-2">
+                    <div className="mt-auto pt-2 space-y-2">
+                      {/* 에러 메시지 표시 */}
+                      <AnimatePresence>
+                        {error && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            className="rounded-xl px-4 py-2.5 text-xs font-semibold text-red-500 bg-red-50 border border-red-200"
+                          >
+                            {error}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
                       <button
                         type="button"
-                        disabled={!creatorReady}
+                        disabled={!creatorReady || isLoading}
                         onClick={handleCreatorSubmit}
                         className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-bold transition-all active:scale-[0.98]"
                         style={{
-                          background: creatorReady
+                          background: creatorReady && !isLoading
                             ? "linear-gradient(135deg, #f3b0f2, #b26efd)"
                             : "#e5e7eb",
-                          color: creatorReady ? "#fff" : "#9ca3af",
-                          cursor: creatorReady ? "pointer" : "not-allowed",
+                          color: creatorReady && !isLoading ? "#fff" : "#9ca3af",
+                          cursor: creatorReady && !isLoading ? "pointer" : "not-allowed",
                         }}
                       >
-                        <Trophy size={16} />
-                        가입 완료 · 공모전 보러가기
-                        <ArrowRight size={14} />
+                        {isLoading ? (
+                          "가입 처리 중..."
+                        ) : (
+                          <>
+                            <Trophy size={16} />
+                            가입 완료 · 공모전 보러가기
+                            <ArrowRight size={14} />
+                          </>
+                        )}
                       </button>
                     </div>
                   </motion.div>
