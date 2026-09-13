@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { useBrandReviewStore } from "@/features/auth/store/brandReviewStore";
+import { useBrandReviewStore, toBrandsInsert } from "@/features/auth/store/brandReviewStore";
 import { useAuthStore } from "@/features/auth/store/authStore";
 import { insertBrand, insertProject } from "@/shared/lib/supabase/queries";
 import { BrandReviewPanel } from "./_components/BrandReviewPanel";
@@ -27,7 +27,7 @@ const INITIAL_FORM: ContestFormState = {
 
 export default function ContestCreatePage() {
   const router = useRouter();
-  const { data: brandData } = useBrandReviewStore();
+  const { data: brandData, brandId, setBrandId } = useBrandReviewStore();
   const { profileId } = useAuthStore();
 
   const [form, setForm] = useState<ContestFormState>(INITIAL_FORM);
@@ -40,25 +40,13 @@ export default function ContestCreatePage() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // 1. brands INSERT
-      // ⏳ 나중에: brand_image → Supabase Storage 업로드 URL
-      const brandId = await insertBrand({
-        brand_name: brandData.brandName,
-        brand_identity: brandData.brandIdentity,
-        brand_story: brandData.brandStory,
-        brand_core_keywords: brandData.keywords,
-        brand_image: "",
-        industries: brandData.industries,
-        input_type: "form",
-        client_id: profileId!,
-        target_market: brandData.market || null,
-        target_gender: brandData.gender || null,
-        target_ages: brandData.ageGroups.length > 0 ? brandData.ageGroups : null,
-        target_interests: brandData.interests.length > 0 ? brandData.interests : null,
-        target_jobs: brandData.occupation || null,
-        extra_notes: brandData.additionalNotes || null,
-        extra_notes_etc: brandData.desiredPerception || null,
-      });
+      // 1. brands — 브랜드 리뷰 저장 시 이미 만들어진 row를 재사용한다.
+      // ⏳ 레거시 폴백: brandReviewStore에 brandId가 없는(예전 로컬 상태) 경우에만 새로 생성.
+      let resolvedBrandId = brandId;
+      if (!resolvedBrandId) {
+        resolvedBrandId = await insertBrand(toBrandsInsert(brandData, profileId!));
+        setBrandId(resolvedBrandId);
+      }
 
       // 2. projects INSERT
       // ⏳ 나중에: reference_image_url → Supabase Storage 업로드 후 URL 배열
@@ -71,7 +59,7 @@ export default function ContestCreatePage() {
         : form.purposes;
 
       await insertProject({
-        brand_id: brandId,
+        brand_id: resolvedBrandId,
         title: brandData.brandName,
         content_categories: contentTypes,
         content_purpose: purposes,

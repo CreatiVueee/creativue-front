@@ -2,6 +2,7 @@ import { create, type StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
 import { createClient } from "@/shared/lib/supabase/client";
 import { fetchClientByUserId, fetchFreelancerByUserId } from "@/shared/lib/supabase/queries";
+import { useBrandReviewStore } from "@/features/auth/store/brandReviewStore";
 import type { User } from "@supabase/supabase-js";
 
 // ⏳ 나중에: 로그인/회원가입 API가 실제 DB에 안정적으로 붙으면 .env.local에서
@@ -102,11 +103,13 @@ const storeCreator: StateCreator<AuthState & AuthActions> = (set, get) => ({
   logout: async () => {
     if (IS_MOCK_AUTH) {
       set({ user: null, role: null, profileId: null, isLoggedIn: false });
+      useBrandReviewStore.getState().clearBrandReview();
       return;
     }
     const supabase = createClient();
     await supabase.auth.signOut();
     set({ user: null, role: null, profileId: null, isLoggedIn: false });
+    useBrandReviewStore.getState().clearBrandReview();
   },
 
   setAuth: (user: AuthUser, role: UserRole, profileId: string) => {

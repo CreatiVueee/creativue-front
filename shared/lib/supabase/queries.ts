@@ -317,6 +317,22 @@ export async function insertBrand(input: BrandsInsert): Promise<number> {
   return data.id;
 }
 
+/**
+ * 브랜드 정보 갱신 (브랜드 리뷰 재작성 시 기존 row를 덮어씀)
+ *
+ * Supabase REST:
+ *   PATCH /rest/v1/brands?id=eq.{id}
+ *
+ * body 필드: insertBrand와 동일 (client_id/input_type 등 포함 전체 필드 재전송)
+ *
+ * RLS 조건: authenticated UPDATE 정책 필요, 본인 소유(client_id) row만 가능하도록 설정 권장
+ */
+export async function updateBrand(id: number, input: BrandsInsert): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.from("brands").update(input).eq("id", id);
+  if (error) throw error;
+}
+
 // ─── Project Applicants ───────────────────────────────────────────────────────
 
 /**
