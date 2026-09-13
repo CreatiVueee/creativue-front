@@ -103,7 +103,7 @@ export function adaptProjectToContest(p: ProjectWithBrand): Contest {
  */
 export async function insertUserProfile(input: UserProfilesInsert): Promise<void> {
   const supabase = createClient();
-  const { error } = await supabase.from("user_profiles").insert(input);
+  const { error } = await supabase.from("user_profiles").upsert(input);
   if (error) throw error;
 }
 
@@ -141,7 +141,7 @@ export async function insertClient(input: ClientsInsert): Promise<string> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("clients")
-    .insert(input)
+    .upsert(input)
     .select("id")
     .single();
   if (error) throw error;
@@ -153,7 +153,7 @@ export async function insertFreelancer(input: FreelancersInsert): Promise<string
   const supabase = createClient();
   const { data, error } = await supabase
     .from("freelancers")
-    .insert(input)
+    .upsert(input)
     .select("id")
     .single();
   if (error) throw error;
