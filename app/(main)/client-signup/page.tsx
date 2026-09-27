@@ -72,6 +72,7 @@ const INPUT_STYLE: React.CSSProperties = {
 
 export default function ClientSignupPage() {
   const router = useRouter();
+  const { signUp, isLoading } = useAuthStore();
   const { setAuth } = useAuthStore();
 
   const [userId,           setUserId]           = useState("");
