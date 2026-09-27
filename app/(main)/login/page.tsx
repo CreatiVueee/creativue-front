@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw]     = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError]       = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
