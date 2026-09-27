@@ -1,9 +1,8 @@
-import { create, type StateCreator } from "zustand";
+import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { createClient } from "@/shared/lib/supabase/client";
 import { fetchClientByUserId, fetchFreelancerByUserId } from "@/shared/lib/supabase/queries";
-import { useBrandReviewStore } from "@/features/auth/store/brandReviewStore";
-import type { User } from "@supabase/supabase-js";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 // ⏳ 나중에: 로그인/회원가입 API가 실제 DB에 안정적으로 붙으면 .env.local에서
 // NEXT_PUBLIC_USE_MOCK_AUTH를 제거(또는 false)하면 즉시 실제 Supabase 인증으로 복귀한다.
@@ -13,6 +12,15 @@ export const IS_MOCK_AUTH = process.env.NEXT_PUBLIC_USE_MOCK_AUTH === "true";
 
 export type UserRole = "client" | "freelancer";
 
+export interface User {
+  id: string;
+  email: string;
+  user_id: string;
+  user_type: UserRole;
+  name: string;
+  displayName?: string;
+}
+
 export interface AuthUser {
   id: string;           // auth.users.id (UUID)
   email: string;
@@ -20,16 +28,19 @@ export interface AuthUser {
 }
 
 interface AuthState {
-  user: AuthUser | null;
+  user: User | AuthUser | null;
   role: UserRole | null;
   profileId: string | null;  // clients.id 또는 freelancers.id (=== auth.users.id)
   isLoggedIn: boolean;
   isInitialized: boolean;    // 세션 복원 완료 여부 (새로고침 후 깜빡임 방지)
+  isLoading: boolean;
 }
 
 interface AuthActions {
+  signUp: (email: string, password: string, userId: string, role: UserRole, extra?: Record<string, unknown>) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  initialize: () => Promise<void>;
   setAuth: (user: AuthUser, role: UserRole, profileId: string) => void;
   clearAuth: () => void;
   /** Mock 모드 전용: 실제 Supabase 호출 없이 즉시 로그인 상태로 전환 */
@@ -49,7 +60,7 @@ export function getAuthErrorMessage(message: string): string {
 
 /** auth.users 정보로 role + profileId 결정 후 store 업데이트 */
 export async function resolveAndSetAuth(
-  user: User,
+  user: SupabaseUser,
   setAuth: AuthActions["setAuth"],
   clearAuth: AuthActions["clearAuth"]
 ) {
@@ -83,7 +94,10 @@ export const useAuthStore = create<AuthState & AuthActions>()(
   persist(
     (set) => ({
       user: null,
+      role: null,
+      profileId: null,
       isLoggedIn: false,
+      isInitialized: false,
       isLoading: false,
 
       signUp: async (email, password, userId, role, extra) => {
@@ -113,7 +127,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               id: data.user.id,
               user_id: userId,
               email: email,
-              phone_number: extra?.phone ?? null,
+              phone_number: (extra?.phone as string | null | undefined) ?? null,
               user_type: role,
             });
           if (profileError) throw profileError;
@@ -124,7 +138,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               .from("clients")
               .insert({
                 id: data.user.id,
-                interested_fields: extra?.interestedFields ?? [],
+                interested_fields: (extra?.interestedFields as string[] | undefined) ?? [],
               });
             if (clientError) throw clientError;
           } else if (role === "freelancer") {
@@ -132,11 +146,11 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               .from("freelancers")
               .insert({
                 id: data.user.id,
-                nickname: extra?.nickname ?? userId,
-                profile_url: extra?.profileUrl ?? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
-                role: extra?.role ?? "designer",
-                main_expertise: extra?.mainExpertise ?? [],
-                experience_years: extra?.experienceYears ?? "신입",
+                nickname: (extra?.nickname as string | undefined) ?? userId,
+                profile_url: (extra?.profileUrl as string | undefined) ?? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
+                role: (extra?.role as string | undefined) ?? "designer",
+                main_expertise: (extra?.mainExpertise as string[] | undefined) ?? [],
+                experience_years: (extra?.experienceYears as string | undefined) ?? "신입",
               });
             if (freelancerError) throw freelancerError;
           }
@@ -147,7 +161,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             email: data.user.email!,
             user_id: userId,
             user_type: role,
-            name: extra?.nickname ?? userId,
+            name: (extra?.nickname as string | undefined) ?? userId,
           };
           set({ user: newUser, isLoggedIn: true });
         } catch (err) {
@@ -270,6 +284,14 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         }
       },
 
+      setAuth: (user, role, profileId) => {
+        set({ user, role, profileId, isLoggedIn: true, isInitialized: true });
+      },
+
+      clearAuth: () => {
+        set({ user: null, role: null, profileId: null, isLoggedIn: false, isInitialized: true });
+      },
+
       mockLogin: (name, role) => {
         set({
           user: {
@@ -286,34 +308,5 @@ export const useAuthStore = create<AuthState & AuthActions>()(
     {
       name: "auth-storage",
     }
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    set({ user: null, role: null, profileId: null, isLoggedIn: false });
-    useBrandReviewStore.getState().clearBrandReview();
-  },
-
-  setAuth: (user: AuthUser, role: UserRole, profileId: string) => {
-    set({ user, role, profileId, isLoggedIn: true, isInitialized: true });
-  },
-
-  clearAuth: () => {
-    set({ user: null, role: null, profileId: null, isLoggedIn: false, isInitialized: true });
-  },
-
-  mockLogin: (name: string, role: UserRole) => {
-    const profileId = `mock-${role}-${Date.now()}`;
-    set({
-      user: { id: profileId, email: `${name}@mock.local`, displayName: name },
-      role,
-      profileId,
-      isLoggedIn: true,
-      isInitialized: true,
-    });
-  },
-});
-
-export const useAuthStore = IS_MOCK_AUTH
-  ? create<AuthState & AuthActions>()(
-      persist(storeCreator, { name: "auth-storage-mock" })
-    )
-  : create<AuthState & AuthActions>()(storeCreator);
+  )
+);
