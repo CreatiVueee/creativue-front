@@ -8,7 +8,7 @@ export function ProfileHero() {
   const { user } = useAuthStore();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const handle = (user?.name ?? "user").toLowerCase().replace(/\s+/g, "");
+  const handle = (user?.displayName ?? "user").toLowerCase().replace(/\s+/g, "");
 
   return (
     <div className="relative overflow-hidden bg-white">
@@ -87,7 +87,7 @@ export function ProfileHero() {
               className="text-gray-900 font-black leading-tight mb-1"
               style={{ fontSize: "2rem", letterSpacing: "-0.02em" }}
             >
-              {user?.name ?? "사용자"}
+              {user?.displayName ?? "사용자"}
             </h1>
             <p className="text-gray-400 text-sm">@{handle}</p>
           </div>

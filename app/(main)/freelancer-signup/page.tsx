@@ -8,10 +8,73 @@ import {
   BrainCircuit, Palette, CheckCircle2,
   ShieldCheck, Clock, AlertCircle, Trophy,
 } from "lucide-react";
-import { ChipButton }    from "@/shared/components/ui/ChipButton";
-import { FileDropzone }  from "@/shared/components/ui/FileDropzone";
-import { PasswordInput } from "@/shared/components/ui/PasswordInput";
-import { useAuthStore }  from "@/features/auth/store/authStore";
+  const pwMismatch = passwordConfirm.length > 0 && password !== passwordConfirm;
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const expertReady =
+    Boolean(email && password && passwordConfirm && !pwMismatch && career && certFile) && !isLoading;
+  const creatorReady =
+    Boolean(email && password && passwordConfirm && !pwMismatch && selectedCategories.length > 0) && !isLoading;
+
+  const signupFreelancer = async (roleValue: "expert" | "creator", extraFields: object) => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const displayName = nickname || email.split("@")[0] || "사용자";
+
+      if (IS_MOCK_AUTH) {
+        const mockId = `mock-freelancer-${Date.now()}`;
+        setAuth({ id: mockId, email, displayName }, "freelancer", mockId);
+        router.push("/projects");
+        return;
+      }
+
+      const supabase = createClient();
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { display_name: displayName } },
+      });
+      if (signUpError) throw new Error(getAuthErrorMessage(signUpError.message));
+      if (!data.user) throw new Error("가입 처리 중 오류가 발생했습니다.");
+
+      await insertUserProfile({
+        id: data.user.id,
+        user_id: displayName,
+        email,
+        phone_number: "",
+        user_type: "freelancer",
+      });
+
+      const profileId = await insertFreelancer({
+        id: data.user.id,
+        nickname: displayName,
+        role: roleValue,
+        profile_url: "",
+        ...extraFields,
+      });
+
+      setAuth({ id: data.user.id, email, displayName }, "freelancer", profileId);
+      router.push("/projects");
+    } catch (err: any) {
+      const msg = err instanceof Error ? err.message : "가입 중 오류가 발생했습니다.";
+      setError(msg);
+      toast.error(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleExpertSubmit = () => {
+    if (!expertReady) return;
+    signupFreelancer("expert", { experience_years: career });
+  };
+
+  const handleCreatorSubmit = () => {
+    if (!creatorReady) return;
+    signupFreelancer("creator", { main_expertise: selectedCategories });
+  };
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -52,6 +115,7 @@ const INPUT_STYLE: React.CSSProperties = {
 
 export default function FreelancerSignupPage() {
   const router = useRouter();
+<<<<<<< HEAD
   const { signUp, isLoading } = useAuthStore();
 
   // 공통 필드
@@ -61,6 +125,18 @@ export default function FreelancerSignupPage() {
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [role,            setRole]            = useState<FreelancerRole>(null);
   const [error,           setError]           = useState("");
+=======
+  const { setAuth } = useAuthStore();
+
+  // 공통 필드
+  const [email,           setEmail]           = useState("");
+  const [password,        setPassword]        = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [role,            setRole]            = useState<FreelancerRole>(null);
+
+  const pwMismatch =
+    passwordConfirm.length > 0 && password !== passwordConfirm;
+>>>>>>> origin/main
 
   // 브랜딩 전문가 필드
   const [career,   setCareer]   = useState("");
@@ -74,6 +150,7 @@ export default function FreelancerSignupPage() {
       prev.includes(val) ? prev.filter((c) => c !== val) : [...prev, val]
     );
 
+<<<<<<< HEAD
   const pwMismatch = passwordConfirm.length > 0 && password !== passwordConfirm;
 
   const expertReady  = Boolean(nickname && email && password && passwordConfirm && !pwMismatch && career && certFile);
@@ -111,6 +188,68 @@ export default function FreelancerSignupPage() {
       console.error("Creator signup error:", err);
       setError(err.message || "창작자 가입에 실패했습니다. 다시 시도해 주세요.");
     }
+=======
+  const [isLoading, setIsLoading] = useState(false);
+
+  const expertReady =
+    Boolean(email && password && passwordConfirm && !pwMismatch && career && certFile) && !isLoading;
+  const creatorReady =
+    Boolean(email && password && passwordConfirm && !pwMismatch && selectedCategories.length > 0) && !isLoading;
+
+  const signupFreelancer = async (roleValue: "expert" | "creator", extraFields: object) => {
+    setIsLoading(true);
+    try {
+      const nickname = email.split("@")[0] || "사용자";
+
+      if (IS_MOCK_AUTH) {
+        const mockId = `mock-freelancer-${Date.now()}`;
+        setAuth({ id: mockId, email, displayName: nickname }, "freelancer", mockId);
+        router.push("/projects");
+        return;
+      }
+
+      const supabase = createClient();
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { display_name: nickname } },
+      });
+      if (error) throw new Error(getAuthErrorMessage(error.message));
+      if (!data.user) throw new Error("가입 처리 중 오류가 발생했습니다.");
+
+      await insertUserProfile({
+        id: data.user.id,
+        email,
+        phone_number: "",
+        user_type: "freelancer",
+      });
+
+      const profileId = await insertFreelancer({
+        id: data.user.id,
+        nickname,
+        role: roleValue,
+        profile_url: "",
+        ...extraFields,
+      });
+
+      setAuth({ id: data.user.id, email, displayName: nickname }, "freelancer", profileId);
+      router.push("/projects");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "가입 중 오류가 발생했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleExpertSubmit = () => {
+    if (!expertReady) return;
+    signupFreelancer("expert", { experience_years: career });
+  };
+
+  const handleCreatorSubmit = () => {
+    if (!creatorReady) return;
+    signupFreelancer("creator", { main_expertise: selectedCategories });
+>>>>>>> origin/main
   };
 
   return (
@@ -177,6 +316,7 @@ export default function FreelancerSignupPage() {
               <div className="space-y-4 mb-8">
                 <div>
                   <label className="block text-xs text-gray-500 font-semibold mb-1.5">
+<<<<<<< HEAD
                     닉네임 <span className="text-[#b26efd]">*</span>
                   </label>
                   <input
@@ -193,6 +333,8 @@ export default function FreelancerSignupPage() {
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 font-semibold mb-1.5">
+=======
+>>>>>>> origin/main
                     이메일 주소 <span className="text-[#b26efd]">*</span>
                   </label>
                   <input
@@ -209,25 +351,40 @@ export default function FreelancerSignupPage() {
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 font-semibold mb-1.5">
+<<<<<<< HEAD
                     비밀번호 <span style={{ color: "#b26efd" }}>*</span>
+=======
+                    비밀번호 <span className="text-[#b26efd]">*</span>
+>>>>>>> origin/main
                   </label>
                   <PasswordInput
                     value={password}
                     onChange={setPassword}
+<<<<<<< HEAD
                     placeholder="8자 이상 입력해 주세요"
                     disabled={isLoading}
+=======
+                    placeholder="6자 이상 입력해 주세요"
+>>>>>>> origin/main
                   />
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 font-semibold mb-1.5">
+<<<<<<< HEAD
                     비밀번호 확인 <span style={{ color: "#b26efd" }}>*</span>
+=======
+                    비밀번호 확인 <span className="text-[#b26efd]">*</span>
+>>>>>>> origin/main
                   </label>
                   <PasswordInput
                     value={passwordConfirm}
                     onChange={setPasswordConfirm}
                     placeholder="비밀번호를 다시 입력해 주세요"
                     hasError={pwMismatch}
+<<<<<<< HEAD
                     disabled={isLoading}
+=======
+>>>>>>> origin/main
                   />
                   <AnimatePresence>
                     {pwMismatch && (

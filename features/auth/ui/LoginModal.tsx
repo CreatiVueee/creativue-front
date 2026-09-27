@@ -14,11 +14,12 @@ import { useAuthStore } from "@/features/auth/store/authStore";
 export function LoginModal() {
   const router = useRouter();
   const { isOpen, redirectPath, close } = useLoginModalStore();
-  const { login, isLoading } = useAuthStore();
+  const { login } = useAuthStore();
 
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw]     = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError]       = useState("");
 
   const resetForm = () => {
@@ -26,6 +27,7 @@ export function LoginModal() {
     setPassword("");
     setShowPw(false);
     setError("");
+    setIsLoading(false);
   };
 
   const handleClose = () => {
@@ -39,6 +41,7 @@ export function LoginModal() {
       return;
     }
     setError("");
+    setIsLoading(true);
 
     try {
       await login(email, password);
@@ -47,7 +50,9 @@ export function LoginModal() {
       if (redirectPath) router.push(redirectPath);
     } catch (err: any) {
       console.error("Modal login failed:", err);
-      setError(err.message || "로그인에 실패했습니다. 이메일과 비밀번호를 확인해 주세요.");
+      setError(err instanceof Error ? err.message : "로그인에 실패했습니다. 이메일과 비밀번호를 확인해 주세요.");
+    } finally {
+      setIsLoading(false);
     }
   };
 

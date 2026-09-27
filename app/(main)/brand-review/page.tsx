@@ -4,11 +4,15 @@ import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
+import { toast } from "sonner";
 import {
   useBrandReviewStore,
+  toBrandsInsert,
   INITIAL_BRAND_REVIEW_DATA,
   type BrandReviewData,
 } from "@/features/auth/store/brandReviewStore";
+import { useAuthStore } from "@/features/auth/store/authStore";
+import { insertBrand, updateBrand } from "@/shared/lib/supabase/queries";
 import { BrandReviewCompleteModal } from "@/features/auth/ui/BrandReviewCompleteModal";
 import { StepNavigator, STEPS } from "./_components/StepNavigator";
 import { Step1BrandInfo } from "./_components/steps/Step1BrandInfo";
@@ -36,7 +40,8 @@ function isStepValid(step: number, data: BrandReviewData): boolean {
 
 export default function BrandReviewPage() {
   const router = useRouter();
-  const { data: savedData, saveBrandReview } = useBrandReviewStore();
+  const { data: savedData, brandId, saveBrandReview, setBrandId } = useBrandReviewStore();
+  const { profileId } = useAuthStore();
 
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<BrandReviewData>(() => ({
@@ -45,6 +50,7 @@ export default function BrandReviewPage() {
     logoFile: null, // File 객체는 localStorage에서 복원 불가
   }));
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const updateForm = useCallback((partial: Partial<BrandReviewData>) => {
     setFormData((prev) => ({ ...prev, ...partial }));
@@ -66,9 +72,25 @@ export default function BrandReviewPage() {
     }
   };
 
-  const handleComplete = () => {
-    saveBrandReview(formData);
-    setShowCompleteModal(true);
+  const handleComplete = async () => {
+    if (!profileId) return;
+    setIsSaving(true);
+    try {
+      const payload = toBrandsInsert(formData, profileId);
+      if (brandId) {
+        await updateBrand(brandId, payload);
+      } else {
+        const newBrandId = await insertBrand(payload);
+        setBrandId(newBrandId);
+      }
+      saveBrandReview(formData);
+      setShowCompleteModal(true);
+    } catch (err) {
+      console.error("브랜드 리뷰 저장 실패:", err);
+      toast.error("브랜드 리뷰 저장에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleContestCreate = () => {
@@ -188,7 +210,8 @@ export default function BrandReviewPage() {
               <button
                 type="button"
                 onClick={handleComplete}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-white text-sm shadow-md transition-all hover:opacity-90"
+                disabled={isSaving}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-white text-sm shadow-md transition-all hover:opacity-90 disabled:opacity-60"
                 style={{
                   background:
                     "linear-gradient(135deg, #f3b0f2, #b26efd, #93b5f6)",
@@ -196,7 +219,7 @@ export default function BrandReviewPage() {
                 }}
               >
                 <CheckCircle size={16} />
-                브랜딩 완성
+                {isSaving ? "저장 중..." : "브랜딩 완성"}
               </button>
             )}
           </div>

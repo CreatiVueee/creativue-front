@@ -9,11 +9,12 @@ import { useAuthStore } from "@/features/auth/store/authStore";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isLoading } = useAuthStore();
+  const { login } = useAuthStore();
 
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw]     = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError]       = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,13 +24,15 @@ export default function LoginPage() {
       return;
     }
     setError("");
+    setIsLoading(true);
 
     try {
       await login(email, password);
       router.push("/client-profile");
-    } catch (err: any) {
-      console.error("Login error:", err);
-      setError(err.message || "로그인에 실패했습니다. 이메일과 비밀번호를 확인해 주세요.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "로그인에 실패했습니다.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
