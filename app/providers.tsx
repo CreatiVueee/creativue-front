@@ -76,6 +76,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
       })
   );
 
+  const initializeAuth = useAuthStore((s) => s.initialize);
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthInitializer />

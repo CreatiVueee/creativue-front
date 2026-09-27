@@ -19,7 +19,6 @@ export function LoginModal() {
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw]     = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError]       = useState("");
 
   const resetForm = () => {
@@ -27,7 +26,6 @@ export function LoginModal() {
     setPassword("");
     setShowPw(false);
     setError("");
-    setIsLoading(false);
   };
 
   const handleClose = () => {
@@ -41,7 +39,6 @@ export function LoginModal() {
       return;
     }
     setError("");
-    setIsLoading(true);
 
     try {
       await login(email, password);

@@ -79,32 +79,212 @@ export async function resolveAndSetAuth(
 
 // ─── Store ────────────────────────────────────────────────────────────────────
 
-const storeCreator: StateCreator<AuthState & AuthActions> = (set, get) => ({
-  user: null,
-  role: null,
-  profileId: null,
-  isLoggedIn: false,
-  isInitialized: false,
+export const useAuthStore = create<AuthState & AuthActions>()(
+  persist(
+    (set) => ({
+      user: null,
+      isLoggedIn: false,
+      isLoading: false,
 
-  login: async (email: string, password: string) => {
-    if (IS_MOCK_AUTH) {
-      // Mock 모드: 이메일에 "freelancer"가 포함되면 프리랜서로, 아니면 클라이언트로 간주
-      const role: UserRole = email.includes("freelancer") ? "freelancer" : "client";
-      get().mockLogin(email.split("@")[0] || "테스트유저", role);
-      return;
-    }
-    const supabase = createClient();
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw new Error(getAuthErrorMessage(error.message));
+      signUp: async (email, password, userId, role, extra) => {
+        set({ isLoading: true });
+        const supabase = createClient();
+        try {
+          // 1. Supabase Auth 회원가입 진행
+          const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              data: {
+                user_type: role,
+                user_id: userId,
+              },
+            },
+          });
 
-    await resolveAndSetAuth(data.user, get().setAuth, get().clearAuth);
-  },
+          if (error) throw error;
+          if (!data.user) throw new Error("회원가입 처리 중 알 수 없는 오류가 발생했습니다.");
 
-  logout: async () => {
-    if (IS_MOCK_AUTH) {
-      set({ user: null, role: null, profileId: null, isLoggedIn: false });
-      useBrandReviewStore.getState().clearBrandReview();
-      return;
+          // 2. public.user_profiles 테이블에 사용자 정보 직접 추가 (동시 생성 보장)
+          // DB 트리거가 오동작하거나 미설정된 환경에서도 정확히 삽입되도록 함
+          const { error: profileError } = await supabase
+            .from("user_profiles")
+            .upsert({
+              id: data.user.id,
+              user_id: userId,
+              email: email,
+              phone_number: extra?.phone ?? null,
+              user_type: role,
+            });
+          if (profileError) throw profileError;
+
+          // 3. 가입 성격(Role)에 따른 서브 프로필 테이블 추가 인서트
+          if (role === "client") {
+            const { error: clientError } = await supabase
+              .from("clients")
+              .insert({
+                id: data.user.id,
+                interested_fields: extra?.interestedFields ?? [],
+              });
+            if (clientError) throw clientError;
+          } else if (role === "freelancer") {
+            const { error: freelancerError } = await supabase
+              .from("freelancers")
+              .insert({
+                id: data.user.id,
+                nickname: extra?.nickname ?? userId,
+                profile_url: extra?.profileUrl ?? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
+                role: extra?.role ?? "designer",
+                main_expertise: extra?.mainExpertise ?? [],
+                experience_years: extra?.experienceYears ?? "신입",
+              });
+            if (freelancerError) throw freelancerError;
+          }
+
+          // 4. 상태 업데이트
+          const newUser: User = {
+            id: data.user.id,
+            email: data.user.email!,
+            user_id: userId,
+            user_type: role,
+            name: extra?.nickname ?? userId,
+          };
+          set({ user: newUser, isLoggedIn: true });
+        } catch (err) {
+          console.error("Signup error:", err);
+          throw err;
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
+      login: async (email, password) => {
+        set({ isLoading: true });
+        const supabase = createClient();
+        try {
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (error) throw error;
+          if (!data.user) throw new Error("로그인에 실패했습니다.");
+
+          // 추가 정보(이름 등) 조회를 위해 프로필 테이블도 함께 로드 시도
+          let nickname = data.user.user_metadata?.user_id ?? "사용자";
+          const userRole = data.user.user_metadata?.user_type ?? "client";
+
+          // 1. 공통 프로필 테이블에서 user_id 조회
+          const { data: profile } = await supabase
+            .from("user_profiles")
+            .select("user_id")
+            .eq("id", data.user.id)
+            .single();
+          if (profile?.user_id) {
+            nickname = profile.user_id;
+          }
+
+          // 2. 프리랜서인 경우 freelancers 테이블의 nickname 조회 (있을 경우 덮어씌움)
+          if (userRole === "freelancer") {
+            const { data: freelancerProfile } = await supabase
+              .from("freelancers")
+              .select("nickname")
+              .eq("id", data.user.id)
+              .single();
+            if (freelancerProfile?.nickname) {
+              nickname = freelancerProfile.nickname;
+            }
+          }
+
+          const loggedInUser: User = {
+            id: data.user.id,
+            email: data.user.email!,
+            user_id: nickname,
+            user_type: userRole,
+            name: nickname,
+          };
+          set({ user: loggedInUser, isLoggedIn: true });
+        } catch (err) {
+          console.error("Login error:", err);
+          set({ user: null, isLoggedIn: false });
+          throw err;
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
+      logout: async () => {
+        const supabase = createClient();
+        try {
+          await supabase.auth.signOut();
+        } catch (err) {
+          console.error("Logout error:", err);
+        } finally {
+          set({ user: null, isLoggedIn: false });
+        }
+      },
+
+      initialize: async () => {
+        const supabase = createClient();
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            let nickname = session.user.user_metadata?.user_id ?? "사용자";
+            const userRole = session.user.user_metadata?.user_type ?? "client";
+
+            // 1. 공통 프로필 테이블에서 user_id 조회
+            const { data: profile } = await supabase
+              .from("user_profiles")
+              .select("user_id")
+              .eq("id", session.user.id)
+              .single();
+            if (profile?.user_id) {
+              nickname = profile.user_id;
+            }
+
+            // 2. 프리랜서인 경우 freelancers 테이블의 nickname 조회
+            if (userRole === "freelancer") {
+              const { data: freelancerProfile } = await supabase
+                .from("freelancers")
+                .select("nickname")
+                .eq("id", session.user.id)
+                .single();
+              if (freelancerProfile?.nickname) {
+                nickname = freelancerProfile.nickname;
+              }
+            }
+
+            const currentUser: User = {
+              id: session.user.id,
+              email: session.user.email!,
+              user_id: nickname,
+              user_type: userRole,
+              name: nickname,
+            };
+            set({ user: currentUser, isLoggedIn: true });
+          } else {
+            set({ user: null, isLoggedIn: false });
+          }
+        } catch (err) {
+          console.error("Auth initialization error:", err);
+        }
+      },
+
+      mockLogin: (name, role) => {
+        set({
+          user: {
+            id: "mock-id",
+            email: `${name}@mock.com`,
+            user_id: name,
+            user_type: role,
+            name: name,
+          },
+          isLoggedIn: true,
+        });
+      },
+    }),
+    {
+      name: "auth-storage",
     }
     const supabase = createClient();
     await supabase.auth.signOut();
