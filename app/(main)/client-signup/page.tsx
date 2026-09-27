@@ -102,6 +102,7 @@ export default function ClientSignupPage() {
   const handleSubmit = async () => {
     if (!isReady) return;
     setIsLoading(true);
+    setError("");
     try {
       if (IS_MOCK_AUTH) {
         const mockId = `mock-client-${Date.now()}`;
@@ -111,12 +112,12 @@ export default function ClientSignupPage() {
       }
 
       const supabase = createClient();
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: { data: { display_name: userId } },
       });
-      if (error) throw new Error(getAuthErrorMessage(error.message));
+      if (signUpError) throw new Error(getAuthErrorMessage(signUpError.message));
       if (!data.user) throw new Error("가입 처리 중 오류가 발생했습니다.");
 
       await insertUserProfile({
@@ -134,8 +135,10 @@ export default function ClientSignupPage() {
 
       setAuth({ id: data.user.id, email, displayName: userId }, "client", profileId);
       setShowModal(true);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "가입 중 오류가 발생했습니다.");
+    } catch (err: any) {
+      const msg = err instanceof Error ? err.message : "가입 중 오류가 발생했습니다.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }

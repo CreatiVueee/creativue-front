@@ -108,6 +108,7 @@ export default function FreelancerSignupPage() {
 
       await insertUserProfile({
         id: data.user.id,
+        user_id: nickname,
         email,
         phone_number: "",
         user_type: "freelancer",

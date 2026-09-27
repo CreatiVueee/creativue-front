@@ -28,6 +28,30 @@ ALTER TABLE public.banner ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow public select banner" ON public.banner;
 CREATE POLICY "Allow public select banner" ON public.banner FOR SELECT USING (true);
 
+ALTER TABLE public.user_profiles ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow public select user_profiles" ON public.user_profiles;
+DROP POLICY IF EXISTS "Allow public insert user_profiles" ON public.user_profiles;
+DROP POLICY IF EXISTS "Allow public update user_profiles" ON public.user_profiles;
+CREATE POLICY "Allow public select user_profiles" ON public.user_profiles FOR SELECT USING (true);
+CREATE POLICY "Allow public insert user_profiles" ON public.user_profiles FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public update user_profiles" ON public.user_profiles FOR UPDATE USING (true);
+
+ALTER TABLE public.clients ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow public select clients" ON public.clients;
+DROP POLICY IF EXISTS "Allow public insert clients" ON public.clients;
+DROP POLICY IF EXISTS "Allow public update clients" ON public.clients;
+CREATE POLICY "Allow public select clients" ON public.clients FOR SELECT USING (true);
+CREATE POLICY "Allow public insert clients" ON public.clients FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public update clients" ON public.clients FOR UPDATE USING (true);
+
+ALTER TABLE public.freelancers ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow public select freelancers" ON public.freelancers;
+DROP POLICY IF EXISTS "Allow public insert freelancers" ON public.freelancers;
+DROP POLICY IF EXISTS "Allow public update freelancers" ON public.freelancers;
+CREATE POLICY "Allow public select freelancers" ON public.freelancers FOR SELECT USING (true);
+CREATE POLICY "Allow public insert freelancers" ON public.freelancers FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public update freelancers" ON public.freelancers FOR UPDATE USING (true);
+
 -- 기존 전용 시드 계정 정화
 DELETE FROM auth.users WHERE email LIKE 'seed_%@creativue.internal';
 
@@ -2523,3 +2547,11 @@ VALUES
   (4, 'Problem 04', '불명확한 타게팅', '"누구에게 팔고 싶으세요?" → 침묵', '타겟 고객을 명확히 정의하지 못하면 어떤 마케팅도 효과를 내기 어렵습니다. 모두를 타겟으로 삼으면 아무도 잡을 수 없습니다.', 'https://images.unsplash.com/photo-1774921676744-4c4133c44bf0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080', 4),
   (5, 'Problem 05', '해외 시장의 장벽', '현지 정서를 모르는 글로벌 콘텐츠', '해외 소비자를 대상으로 한 콘텐츠에 정서적·문화적·언어적 오류가 있으면 브랜드 이미지가 심각하게 손상될 수 있습니다.', 'https://images.unsplash.com/photo-1767449441925-737379bc2c4d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1080', 5)
 ON CONFLICT (id) DO NOTHING;
+
+-- 9. 시드 데이터 추가 후 시퀀스(Sequence) 번호 동기화 (PK 중복 23505 에러 방지)
+SELECT setval(pg_get_serial_sequence('public.brands', 'id'), COALESCE((SELECT MAX(id) FROM public.brands), 1));
+SELECT setval(pg_get_serial_sequence('public.projects', 'id'), COALESCE((SELECT MAX(id) FROM public.projects), 1));
+SELECT setval(pg_get_serial_sequence('public.project_submissions', 'id'), COALESCE((SELECT MAX(id) FROM public.project_submissions), 1));
+SELECT setval(pg_get_serial_sequence('public.banner', 'id'), COALESCE((SELECT MAX(id) FROM public.banner), 1));
+SELECT setval(pg_get_serial_sequence('public.menus', 'id'), COALESCE((SELECT MAX(id) FROM public.menus), 1));
+

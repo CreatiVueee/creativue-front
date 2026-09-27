@@ -41,7 +41,7 @@ interface AuthActions {
 export function getAuthErrorMessage(message: string): string {
   if (message.includes("Invalid login credentials")) return "이메일 또는 비밀번호가 올바르지 않습니다.";
   if (message.includes("Email not confirmed"))       return "이메일 인증이 필요합니다. 받은 편지함을 확인해주세요.";
-  if (message.includes("User already registered"))   return "이미 가입된 이메일입니다.";
+  if (message.includes("User already registered") || message.includes("already exists")) return "이미 가입된 이메일 주소입니다. 해당 계정으로 로그인하시거나 다른 이메일로 시도해 주세요.";
   if (message.includes("Password should be at least")) return "비밀번호는 6자 이상이어야 합니다.";
   if (message.includes("Unable to validate email")) return "올바른 이메일 형식을 입력해주세요.";
   return message;

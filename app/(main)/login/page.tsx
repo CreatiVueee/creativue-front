@@ -25,6 +25,7 @@ export default function LoginPage() {
     }
     setError("");
     setIsLoading(true);
+
     try {
       await login(email, password);
       router.push("/client-profile");
