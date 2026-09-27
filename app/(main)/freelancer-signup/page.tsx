@@ -8,73 +8,13 @@ import {
   BrainCircuit, Palette, CheckCircle2,
   ShieldCheck, Clock, AlertCircle, Trophy,
 } from "lucide-react";
-  const pwMismatch = passwordConfirm.length > 0 && password !== passwordConfirm;
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
-  const expertReady =
-    Boolean(email && password && passwordConfirm && !pwMismatch && career && certFile) && !isLoading;
-  const creatorReady =
-    Boolean(email && password && passwordConfirm && !pwMismatch && selectedCategories.length > 0) && !isLoading;
-
-  const signupFreelancer = async (roleValue: "expert" | "creator", extraFields: object) => {
-    setIsLoading(true);
-    setError("");
-    try {
-      const displayName = nickname || email.split("@")[0] || "사용자";
-
-      if (IS_MOCK_AUTH) {
-        const mockId = `mock-freelancer-${Date.now()}`;
-        setAuth({ id: mockId, email, displayName }, "freelancer", mockId);
-        router.push("/projects");
-        return;
-      }
-
-      const supabase = createClient();
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { display_name: displayName } },
-      });
-      if (signUpError) throw new Error(getAuthErrorMessage(signUpError.message));
-      if (!data.user) throw new Error("가입 처리 중 오류가 발생했습니다.");
-
-      await insertUserProfile({
-        id: data.user.id,
-        user_id: displayName,
-        email,
-        phone_number: "",
-        user_type: "freelancer",
-      });
-
-      const profileId = await insertFreelancer({
-        id: data.user.id,
-        nickname: displayName,
-        role: roleValue,
-        profile_url: "",
-        ...extraFields,
-      });
-
-      setAuth({ id: data.user.id, email, displayName }, "freelancer", profileId);
-      router.push("/projects");
-    } catch (err: any) {
-      const msg = err instanceof Error ? err.message : "가입 중 오류가 발생했습니다.";
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleExpertSubmit = () => {
-    if (!expertReady) return;
-    signupFreelancer("expert", { experience_years: career });
-  };
-
-  const handleCreatorSubmit = () => {
-    if (!creatorReady) return;
-    signupFreelancer("creator", { main_expertise: selectedCategories });
-  };
+import { toast }           from "sonner";
+import { ChipButton }      from "@/shared/components/ui/ChipButton";
+import { FileDropzone }    from "@/shared/components/ui/FileDropzone";
+import { PasswordInput }   from "@/shared/components/ui/PasswordInput";
+import { useAuthStore, getAuthErrorMessage, IS_MOCK_AUTH } from "@/features/auth/store/authStore";
+import { createClient }    from "@/shared/lib/supabase/client";
+import { insertUserProfile, insertFreelancer } from "@/shared/lib/supabase/queries";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -115,17 +55,6 @@ const INPUT_STYLE: React.CSSProperties = {
 
 export default function FreelancerSignupPage() {
   const router = useRouter();
-<<<<<<< HEAD
-  const { signUp, isLoading } = useAuthStore();
-
-  // 공통 필드
-  const [nickname,        setNickname]        = useState("");
-  const [email,           setEmail]            = useState("");
-  const [password,        setPassword]        = useState("");
-  const [passwordConfirm, setPasswordConfirm] = useState("");
-  const [role,            setRole]            = useState<FreelancerRole>(null);
-  const [error,           setError]           = useState("");
-=======
   const { setAuth } = useAuthStore();
 
   // 공통 필드
@@ -136,7 +65,6 @@ export default function FreelancerSignupPage() {
 
   const pwMismatch =
     passwordConfirm.length > 0 && password !== passwordConfirm;
->>>>>>> origin/main
 
   // 브랜딩 전문가 필드
   const [career,   setCareer]   = useState("");
@@ -150,45 +78,6 @@ export default function FreelancerSignupPage() {
       prev.includes(val) ? prev.filter((c) => c !== val) : [...prev, val]
     );
 
-<<<<<<< HEAD
-  const pwMismatch = passwordConfirm.length > 0 && password !== passwordConfirm;
-
-  const expertReady  = Boolean(nickname && email && password && passwordConfirm && !pwMismatch && career && certFile);
-  const creatorReady = Boolean(nickname && email && password && passwordConfirm && !pwMismatch && selectedCategories.length > 0);
-
-  const handleExpertSubmit = async () => {
-    if (!expertReady || isLoading) return;
-    try {
-      setError("");
-      await signUp(email, password, nickname, "freelancer", {
-        nickname,
-        role: "expert",
-        experienceYears: career,
-        mainExpertise: ["branding"],
-      });
-      router.push("/projects");
-    } catch (err: any) {
-      console.error("Expert signup error:", err);
-      setError(err.message || "전문가 가입 신청에 실패했습니다. 다시 시도해 주세요.");
-    }
-  };
-
-  const handleCreatorSubmit = async () => {
-    if (!creatorReady || isLoading) return;
-    try {
-      setError("");
-      await signUp(email, password, nickname, "freelancer", {
-        nickname,
-        role: "creator",
-        mainExpertise: selectedCategories,
-        experienceYears: "신입",
-      });
-      router.push("/projects");
-    } catch (err: any) {
-      console.error("Creator signup error:", err);
-      setError(err.message || "창작자 가입에 실패했습니다. 다시 시도해 주세요.");
-    }
-=======
   const [isLoading, setIsLoading] = useState(false);
 
   const expertReady =
@@ -219,6 +108,7 @@ export default function FreelancerSignupPage() {
 
       await insertUserProfile({
         id: data.user.id,
+        user_id: nickname,
         email,
         phone_number: "",
         user_type: "freelancer",
@@ -249,7 +139,6 @@ export default function FreelancerSignupPage() {
   const handleCreatorSubmit = () => {
     if (!creatorReady) return;
     signupFreelancer("creator", { main_expertise: selectedCategories });
->>>>>>> origin/main
   };
 
   return (
@@ -316,25 +205,6 @@ export default function FreelancerSignupPage() {
               <div className="space-y-4 mb-8">
                 <div>
                   <label className="block text-xs text-gray-500 font-semibold mb-1.5">
-<<<<<<< HEAD
-                    닉네임 <span className="text-[#b26efd]">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={nickname}
-                    onChange={(e) => setNickname(e.target.value)}
-                    placeholder="활동명을 입력해 주세요"
-                    disabled={isLoading}
-                    className={INPUT_CLASS}
-                    style={INPUT_STYLE}
-                    onFocus={onInputFocus}
-                    onBlur={onInputBlur}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 font-semibold mb-1.5">
-=======
->>>>>>> origin/main
                     이메일 주소 <span className="text-[#b26efd]">*</span>
                   </label>
                   <input
@@ -342,7 +212,6 @@ export default function FreelancerSignupPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="example@email.com"
-                    disabled={isLoading}
                     className={INPUT_CLASS}
                     style={INPUT_STYLE}
                     onFocus={onInputFocus}
@@ -351,40 +220,23 @@ export default function FreelancerSignupPage() {
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 font-semibold mb-1.5">
-<<<<<<< HEAD
-                    비밀번호 <span style={{ color: "#b26efd" }}>*</span>
-=======
                     비밀번호 <span className="text-[#b26efd]">*</span>
->>>>>>> origin/main
                   </label>
                   <PasswordInput
                     value={password}
                     onChange={setPassword}
-<<<<<<< HEAD
-                    placeholder="8자 이상 입력해 주세요"
-                    disabled={isLoading}
-=======
                     placeholder="6자 이상 입력해 주세요"
->>>>>>> origin/main
                   />
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 font-semibold mb-1.5">
-<<<<<<< HEAD
-                    비밀번호 확인 <span style={{ color: "#b26efd" }}>*</span>
-=======
                     비밀번호 확인 <span className="text-[#b26efd]">*</span>
->>>>>>> origin/main
                   </label>
                   <PasswordInput
                     value={passwordConfirm}
                     onChange={setPasswordConfirm}
                     placeholder="비밀번호를 다시 입력해 주세요"
                     hasError={pwMismatch}
-<<<<<<< HEAD
-                    disabled={isLoading}
-=======
->>>>>>> origin/main
                   />
                   <AnimatePresence>
                     {pwMismatch && (
@@ -602,42 +454,22 @@ export default function FreelancerSignupPage() {
                     </div>
 
                     <div className="mt-auto space-y-2 pt-2">
-                      {/* 에러 메시지 표시 */}
-                      <AnimatePresence>
-                        {error && (
-                          <motion.div
-                            initial={{ opacity: 0, y: -6 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0 }}
-                            className="rounded-xl px-4 py-2.5 text-xs font-semibold text-red-500 bg-red-50 border border-red-200"
-                          >
-                            {error}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-
                       <button
                         type="button"
-                        disabled={!expertReady || isLoading}
+                        disabled={!expertReady}
                         onClick={handleExpertSubmit}
                         className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-bold transition-all active:scale-[0.98]"
                         style={{
-                          background: expertReady && !isLoading
+                          background: expertReady
                             ? "linear-gradient(135deg, #f3b0f2, #b26efd)"
                             : "#e5e7eb",
-                          color: expertReady && !isLoading ? "#fff" : "#9ca3af",
-                          cursor: expertReady && !isLoading ? "pointer" : "not-allowed",
+                          color: expertReady ? "#fff" : "#9ca3af",
+                          cursor: expertReady ? "pointer" : "not-allowed",
                         }}
                       >
-                        {isLoading ? (
-                          "승인 신청 중..."
-                        ) : (
-                          <>
-                            <ShieldCheck size={16} />
-                            승인 신청하기
-                            <ArrowRight size={14} />
-                          </>
-                        )}
+                        <ShieldCheck size={16} />
+                        승인 신청하기
+                        <ArrowRight size={14} />
                       </button>
                       <div className="flex items-center justify-center gap-1.5">
                         <Clock size={11} className="text-gray-300" />
@@ -712,43 +544,23 @@ export default function FreelancerSignupPage() {
                       </div>
                     </div>
 
-                    <div className="mt-auto pt-2 space-y-2">
-                      {/* 에러 메시지 표시 */}
-                      <AnimatePresence>
-                        {error && (
-                          <motion.div
-                            initial={{ opacity: 0, y: -6 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0 }}
-                            className="rounded-xl px-4 py-2.5 text-xs font-semibold text-red-500 bg-red-50 border border-red-200"
-                          >
-                            {error}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-
+                    <div className="mt-auto pt-2">
                       <button
                         type="button"
-                        disabled={!creatorReady || isLoading}
+                        disabled={!creatorReady}
                         onClick={handleCreatorSubmit}
                         className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-bold transition-all active:scale-[0.98]"
                         style={{
-                          background: creatorReady && !isLoading
+                          background: creatorReady
                             ? "linear-gradient(135deg, #f3b0f2, #b26efd)"
                             : "#e5e7eb",
-                          color: creatorReady && !isLoading ? "#fff" : "#9ca3af",
-                          cursor: creatorReady && !isLoading ? "pointer" : "not-allowed",
+                          color: creatorReady ? "#fff" : "#9ca3af",
+                          cursor: creatorReady ? "pointer" : "not-allowed",
                         }}
                       >
-                        {isLoading ? (
-                          "가입 처리 중..."
-                        ) : (
-                          <>
-                            <Trophy size={16} />
-                            가입 완료 · 공모전 보러가기
-                            <ArrowRight size={14} />
-                          </>
-                        )}
+                        <Trophy size={16} />
+                        가입 완료 · 공모전 보러가기
+                        <ArrowRight size={14} />
                       </button>
                     </div>
                   </motion.div>
