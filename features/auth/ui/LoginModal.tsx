@@ -45,7 +45,7 @@ export function LoginModal() {
       close();
       resetForm();
       if (redirectPath) router.push(redirectPath);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Modal login failed:", err);
       setError(err instanceof Error ? err.message : "로그인에 실패했습니다. 이메일과 비밀번호를 확인해 주세요.");
     } finally {

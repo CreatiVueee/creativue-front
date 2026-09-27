@@ -153,7 +153,7 @@ export default function HomePage() {
 
   const activeBanners = bannersData && bannersData.length > 0 ? bannersData : [];
   const displaySlides = activeBanners.length > 0
-    ? activeBanners.map((b: any, i: number) => ({
+    ? activeBanners.map((b: { id: string | number; badge_text?: string | null; main_title?: string | null; sub_title?: string | null; description?: string | null; image?: string | null }, i: number) => ({
         id: Number(b.id),
         tag: b.badge_text ?? "",
         title: b.main_title ?? "",
@@ -262,7 +262,7 @@ export default function HomePage() {
               onSwiper={(swiper) => { swiperRef.current = swiper; }}
               onSlideChange={(swiper) => setActiveIdx(swiper.realIndex)}
             >
-              {displaySlides.map((slide: any, i: number) => (
+              {displaySlides.map((slide, i: number) => (
                 <SwiperSlide key={slide.id}>
                   <div className="flex" style={{ minHeight: 460 }}>
                     {/* 일러스트 */}
@@ -336,7 +336,7 @@ export default function HomePage() {
 
               {/* 도트 인디케이터 */}
               <div className="flex items-center gap-1.5">
-                {displaySlides.map((_: any, i: number) => (
+                {displaySlides.map((_, i: number) => (
                   <button
                     key={i}
                     onClick={() => swiperRef.current?.slideToLoop(i)}

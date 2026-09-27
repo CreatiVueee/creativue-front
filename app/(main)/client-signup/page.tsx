@@ -135,7 +135,7 @@ export default function ClientSignupPage() {
 
       setAuth({ id: data.user.id, email, displayName: userId }, "client", profileId);
       setShowModal(true);
-    } catch (err: any) {
+    } catch (err) {
       const msg = err instanceof Error ? err.message : "가입 중 오류가 발생했습니다.";
       setError(msg);
       toast.error(msg);
