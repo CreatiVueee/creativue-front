@@ -1,48 +1,81 @@
-import { create } from "zustand";
+import { create, type StateCreator } from "zustand";
 import { persist } from "zustand/middleware";
 import { createClient } from "@/shared/lib/supabase/client";
+import { fetchClientByUserId, fetchFreelancerByUserId } from "@/shared/lib/supabase/queries";
+import { useBrandReviewStore } from "@/features/auth/store/brandReviewStore";
+import type { User } from "@supabase/supabase-js";
+
+// ⏳ 나중에: 로그인/회원가입 API가 실제 DB에 안정적으로 붙으면 .env.local에서
+// NEXT_PUBLIC_USE_MOCK_AUTH를 제거(또는 false)하면 즉시 실제 Supabase 인증으로 복귀한다.
+export const IS_MOCK_AUTH = process.env.NEXT_PUBLIC_USE_MOCK_AUTH === "true";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type UserRole = "client" | "freelancer" | "admin";
+export type UserRole = "client" | "freelancer";
 
-export interface User {
-  id: string;
+export interface AuthUser {
+  id: string;           // auth.users.id (UUID)
   email: string;
-  user_id: string; // 사용자 가입 ID
-  user_type: UserRole;
-  name: string;    // UI 호환용 이름 필드
+  displayName: string;  // 클라이언트: 아이디, 프리랜서: 닉네임
 }
 
 interface AuthState {
-  user: User | null;
+  user: AuthUser | null;
+  role: UserRole | null;
+  profileId: string | null;  // clients.id 또는 freelancers.id (=== auth.users.id)
   isLoggedIn: boolean;
-  isLoading: boolean;
+  isInitialized: boolean;    // 세션 복원 완료 여부 (새로고침 후 깜빡임 방지)
 }
 
 interface AuthActions {
-  signUp: (
-    email: string,
-    password: string,
-    userId: string,
-    role: UserRole,
-    extra?: {
-      phone?: string;
-      interestedFields?: string[]; // client 용
-      nickname?: string;          // freelancer 용
-      profileUrl?: string;
-      role?: string;
-      mainExpertise?: string[];
-      experienceYears?: string;
-    }
-  ) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  initialize: () => Promise<void>;
-  // ─── 하위 호환성 유지용 임시 Mock ───
+  setAuth: (user: AuthUser, role: UserRole, profileId: string) => void;
+  clearAuth: () => void;
+  /** Mock 모드 전용: 실제 Supabase 호출 없이 즉시 로그인 상태로 전환 */
   mockLogin: (name: string, role: UserRole) => void;
 }
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+export function getAuthErrorMessage(message: string): string {
+  if (message.includes("Invalid login credentials")) return "이메일 또는 비밀번호가 올바르지 않습니다.";
+  if (message.includes("Email not confirmed"))       return "이메일 인증이 필요합니다. 받은 편지함을 확인해주세요.";
+  if (message.includes("User already registered") || message.includes("already exists")) return "이미 가입된 이메일 주소입니다. 해당 계정으로 로그인하시거나 다른 이메일로 시도해 주세요.";
+  if (message.includes("Password should be at least")) return "비밀번호는 6자 이상이어야 합니다.";
+  if (message.includes("Unable to validate email")) return "올바른 이메일 형식을 입력해주세요.";
+  return message;
+}
+
+/** auth.users 정보로 role + profileId 결정 후 store 업데이트 */
+export async function resolveAndSetAuth(
+  user: User,
+  setAuth: AuthActions["setAuth"],
+  clearAuth: AuthActions["clearAuth"]
+) {
+  const displayName = (user.user_metadata?.display_name as string | undefined)
+    ?? user.email?.split("@")[0]
+    ?? "";
+
+  const client = await fetchClientByUserId(user.id);
+  if (client) {
+    setAuth({ id: user.id, email: user.email!, displayName }, "client", client.id);
+    return;
+  }
+
+  const freelancer = await fetchFreelancerByUserId(user.id);
+  if (freelancer) {
+    setAuth(
+      { id: user.id, email: user.email!, displayName: freelancer.nickname },
+      "freelancer",
+      freelancer.id
+    );
+    return;
+  }
+
+  // auth 계정은 있는데 프로필 테이블에 없는 경우 (가입 도중 실패)
+  clearAuth();
+}
 
 // ─── Store ────────────────────────────────────────────────────────────────────
 
@@ -253,5 +286,34 @@ export const useAuthStore = create<AuthState & AuthActions>()(
     {
       name: "auth-storage",
     }
-  )
-);
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    set({ user: null, role: null, profileId: null, isLoggedIn: false });
+    useBrandReviewStore.getState().clearBrandReview();
+  },
+
+  setAuth: (user: AuthUser, role: UserRole, profileId: string) => {
+    set({ user, role, profileId, isLoggedIn: true, isInitialized: true });
+  },
+
+  clearAuth: () => {
+    set({ user: null, role: null, profileId: null, isLoggedIn: false, isInitialized: true });
+  },
+
+  mockLogin: (name: string, role: UserRole) => {
+    const profileId = `mock-${role}-${Date.now()}`;
+    set({
+      user: { id: profileId, email: `${name}@mock.local`, displayName: name },
+      role,
+      profileId,
+      isLoggedIn: true,
+      isInitialized: true,
+    });
+  },
+});
+
+export const useAuthStore = IS_MOCK_AUTH
+  ? create<AuthState & AuthActions>()(
+      persist(storeCreator, { name: "auth-storage-mock" })
+    )
+  : create<AuthState & AuthActions>()(storeCreator);

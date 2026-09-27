@@ -68,9 +68,8 @@ export function Header() {
     handleNavClick(path, requiresAuth);
   };
 
-  const handleLogout = () => {
-    // ⏳ 나중에: supabase.auth.signOut() 추가
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.push("/");
   };
 
@@ -118,7 +117,7 @@ export function Header() {
         <div className="hidden md:flex items-center gap-2">
           {isLoggedIn ? (
             <>
-              <span className="text-white/70 text-sm mr-1">{user?.name} 님</span>
+              <span className="text-white/70 text-sm mr-1">{user?.displayName} 님</span>
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-white/80 hover:bg-white/15 hover:text-white transition-all"
