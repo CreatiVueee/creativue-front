@@ -117,8 +117,11 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             name: extra?.nickname ?? userId,
           };
           set({ user: newUser, isLoggedIn: true });
-        } catch (err) {
+        } catch (err: any) {
           console.error("Signup error:", err);
+          if (err?.message?.includes("User already registered") || err?.message?.includes("already exists")) {
+            throw new Error("이미 가입된 이메일 주소입니다. 해당 계정으로 로그인하시거나 다른 이메일로 시도해 주세요.");
+          }
           throw err;
         } finally {
           set({ isLoading: false });
@@ -146,7 +149,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             .from("user_profiles")
             .select("user_id")
             .eq("id", data.user.id)
-            .single();
+            .maybeSingle();
           if (profile?.user_id) {
             nickname = profile.user_id;
           }
@@ -157,7 +160,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               .from("freelancers")
               .select("nickname")
               .eq("id", data.user.id)
-              .single();
+              .maybeSingle();
             if (freelancerProfile?.nickname) {
               nickname = freelancerProfile.nickname;
             }
@@ -204,7 +207,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               .from("user_profiles")
               .select("user_id")
               .eq("id", session.user.id)
-              .single();
+              .maybeSingle();
             if (profile?.user_id) {
               nickname = profile.user_id;
             }
@@ -215,7 +218,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
                 .from("freelancers")
                 .select("nickname")
                 .eq("id", session.user.id)
-                .single();
+                .maybeSingle();
               if (freelancerProfile?.nickname) {
                 nickname = freelancerProfile.nickname;
               }
