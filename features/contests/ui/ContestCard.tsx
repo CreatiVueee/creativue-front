@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Trophy, Users, Calendar } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { calcDday } from "@/shared/lib/utils/date";
@@ -51,10 +52,11 @@ export function ContestCard({ contest }: ContestCardProps) {
     >
       {/* 썸네일 */}
       <div className="relative overflow-hidden" style={{ height: 160 }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={contest.image}
-          alt={contest.brand}
+        <Image
+          src={contest.image || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800"}
+          alt={contest.brand || "공모전 이미지"}
+          fill
+          unoptimized
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.18)" }} />
