@@ -72,6 +72,7 @@ const INPUT_STYLE: React.CSSProperties = {
 
 export default function ClientSignupPage() {
   const router = useRouter();
+  const { signUp, isLoading } = useAuthStore();
   const { setAuth } = useAuthStore();
 
   const [userId,           setUserId]           = useState("");
@@ -82,6 +83,7 @@ export default function ClientSignupPage() {
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [agreed,           setAgreed]           = useState(false);
   const [showModal,        setShowModal]        = useState(false);
+  const [error,            setError]            = useState("");
   const [isLoading,        setIsLoading]        = useState(false);
 
   const pwMismatch =
@@ -361,9 +363,23 @@ export default function ClientSignupPage() {
 
               {/* 약관 동의 + 제출 */}
               <div className="mt-auto space-y-3">
+                {/* 에러 메시지 표시 */}
+                <AnimatePresence>
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="rounded-xl px-4 py-2.5 text-xs font-semibold text-red-500 bg-red-50 border border-red-200"
+                    >
+                      {error}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 <div
                   className="flex items-start gap-3 cursor-pointer"
-                  onClick={() => setAgreed((v) => !v)}
+                  onClick={() => !isLoading && setAgreed((v) => !v)}
                 >
                   <div
                     className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5 transition-all"
@@ -384,19 +400,19 @@ export default function ClientSignupPage() {
 
                 <button
                   type="button"
-                  disabled={!isReady}
+                  disabled={!isReady || isLoading}
                   onClick={handleSubmit}
                   className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl text-sm font-bold transition-all active:scale-[0.98]"
                   style={{
-                    background: isReady
+                    background: isReady && !isLoading
                       ? "linear-gradient(135deg, #f3b0f2, #b26efd)"
                       : "#e5e7eb",
-                    color: isReady ? "#fff" : "#9ca3af",
-                    cursor: isReady ? "pointer" : "not-allowed",
+                    color: isReady && !isLoading ? "#fff" : "#9ca3af",
+                    cursor: isReady && !isLoading ? "pointer" : "not-allowed",
                   }}
                 >
-                  가입 완료하기
-                  <ArrowRight size={15} />
+                  {isLoading ? "가입 처리 중..." : "가입 완료하기"}
+                  {!isLoading && <ArrowRight size={15} />}
                 </button>
 
                 <p className="text-center text-[11px] text-gray-400">

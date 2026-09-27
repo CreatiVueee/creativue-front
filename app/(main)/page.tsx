@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { carouselSlides } from "@/data/carousel";
 import { useLatestContests } from "@/features/contests/hooks/useLatestContests";
 import { ContestCard } from "@/features/contests/ui/ContestCard";
+import { useBanners } from "@/features/contests/hooks/useBanners";
 
 // ── Carousel SVG 일러스트 (data/carousel.ts에서 분리 — JSX 포함) ─────────────
 const ILLUSTRATIONS = [
@@ -147,7 +148,21 @@ export default function HomePage() {
   const router = useRouter();
   const swiperRef = useRef<SwiperType | null>(null);
   const [activeIdx, setActiveIdx] = useState(0);
-  const { data: latestContests, isLoading } = useLatestContests();
+  const { data: latestContests, isLoading: contestsLoading } = useLatestContests();
+  const { data: bannersData } = useBanners();
+
+  const activeBanners = bannersData && bannersData.length > 0 ? bannersData : [];
+  const displaySlides = activeBanners.length > 0
+    ? activeBanners.map((b: any, i: number) => ({
+        id: Number(b.id),
+        tag: b.badge_text ?? "",
+        title: b.main_title ?? "",
+        subtitle: b.sub_title ?? "",
+        desc: b.description ?? "",
+        image: b.image ?? null,
+        bg: i % 2 === 0 ? "#f8f4ff" : "#fff7ed",
+      }))
+    : carouselSlides.map(slide => ({ ...slide, image: null }));
 
   return (
     <div style={{ minHeight: "calc(100vh - 68px)", background: "#f8f8fc" }}>
@@ -247,15 +262,23 @@ export default function HomePage() {
               onSwiper={(swiper) => { swiperRef.current = swiper; }}
               onSlideChange={(swiper) => setActiveIdx(swiper.realIndex)}
             >
-              {carouselSlides.map((slide, i) => (
+              {displaySlides.map((slide: any, i: number) => (
                 <SwiperSlide key={slide.id}>
                   <div className="flex" style={{ minHeight: 460 }}>
                     {/* 일러스트 */}
                     <div
                       className="hidden sm:flex items-center justify-center flex-shrink-0"
-                      style={{ width: "46%", background: slide.bg, padding: 36 }}
+                      style={{ width: "46%", background: slide.bg, padding: 36, position: "relative" }}
                     >
-                      {ILLUSTRATIONS[i]}
+                      {slide.image && !slide.image.startsWith("#") ? (
+                        <img 
+                          src={slide.image} 
+                          alt={slide.title} 
+                          className="w-full h-full object-cover rounded-xl shadow-sm" 
+                        />
+                      ) : (
+                        ILLUSTRATIONS[i % ILLUSTRATIONS.length]
+                      )}
                     </div>
 
                     {/* 텍스트 */}
@@ -313,7 +336,7 @@ export default function HomePage() {
 
               {/* 도트 인디케이터 */}
               <div className="flex items-center gap-1.5">
-                {carouselSlides.map((_, i) => (
+                {displaySlides.map((_: any, i: number) => (
                   <button
                     key={i}
                     onClick={() => swiperRef.current?.slideToLoop(i)}
@@ -387,7 +410,7 @@ export default function HomePage() {
 
           {/* 3×2 그리드 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {isLoading
+            {contestsLoading
               ? Array.from({ length: 6 }).map((_, i) => (
                   <div
                     key={i}
